@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="800"
+   height="512"
+   viewBox="0 0 800 512"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="disbotlab.svg"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   inkscape:export-filename="disbotlab.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="1.6779975"
+     inkscape:cx="129.02284"
+     inkscape:cy="221.9908"
+     inkscape:window-width="3440"
+     inkscape:window-height="1417"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Réteg 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#3264c8;stroke:#3264c8;stroke-width:2.2"
+       id="rect1"
+       width="330"
+       height="271.33334"
+       x="91"
+       y="167.7697"
+       ry="14.666667" />
+    <circle
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:3"
+       id="path1"
+       cx="175"
+       cy="252.92578"
+       r="64.489418" />
+    <circle
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:3"
+       id="path1-8"
+       cx="335"
+       cy="252.92578"
+       r="64.489418" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.36112"
+       id="rect2"
+       width="88"
+       height="40"
+       x="266"
+       y="368.43637"
+       ry="13.333333" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:2.8178"
+       id="rect3"
+       width="70"
+       height="13.233328"
+       x="221"
+       y="153.43637"
+       ry="6.6166639" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:2.32379"
+       id="rect4"
+       width="12"
+       height="80"
+       x="293.14206"
+       y="-90.509666"
+       transform="rotate(33.592609)" />
+    <circle
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4.12615"
+       id="path6"
+       cx="299.26068"
+       cy="90.116661"
+       r="18.31971" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:192px;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#3264c8;fill-opacity:1;stroke:none;stroke-width:3"
+       x="453.71255"
+       y="363.54849"
+       id="text7"><tspan
+         sodipodi:role="line"
+         id="tspan7"
+         x="453.71255"
+         y="363.54849"
+         style="font-size:192px">DBL</tspan></text>
+  </g>
+</svg>
