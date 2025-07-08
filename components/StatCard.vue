@@ -1,15 +1,17 @@
 <script setup lang="ts">
-    const props = defineProps(["title", "value", "icon"]);
+    import { Badge } from 'primevue';
+    const props = defineProps(["title", "value", "icon", "warn"]);
 </script>
 
 <template>
     <div class="card w-full md:w-[calc(50%-1rem)] lg:w-[calc(25%-1rem)] 2xl:w-fit">
         <div class="flex flex-col gap-4">
             <div class="flex items-center gap-2">
-                <i :class="icon"></i>
-                <h2 class="text-xl">{{ title }}</h2>
+                <i :class="props.icon"></i>
+                <h2 class="text-xl">{{ props.title }}</h2>
+                <Badge severity="warn" value="Warning!" v-if="props.warn" />
             </div>
-            <p class="text-lg font-bold">{{ value }}</p>
+            <p class="text-lg font-bold">{{ props.value }}</p>
         </div>
     </div>
 </template>

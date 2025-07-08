@@ -9,7 +9,8 @@
             label: 'Dashboard',
             items: [
                 { label: 'Home', icon: 'pi pi-home' },
-                { label: 'Modules', icon: 'pi pi-file' }
+                { label: 'Modules', icon: 'pi pi-file' },
+                { label: 'Databases', icon: 'pi pi-database' }
             ]
         },
         {
