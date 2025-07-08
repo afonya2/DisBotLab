@@ -1,0 +1,30 @@
+{
+  "name": "disbotlab-backend",
+  "version": "0.1.0",
+  "description": "The heart of DisBotLab",
+  "keywords": [
+    "discord",
+    "bot",
+    "no-code"
+  ],
+  "homepage": "https://github.com/afonya2/DisBotLab#readme",
+  "bugs": {
+    "url": "https://github.com/afonya2/DisBotLab/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afonya2/DisBotLab.git"
+  },
+  "license": "MIT",
+  "author": "Afonya",
+  "type": "commonjs",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "express": "^5.1.0",
+    "tsx": "^4.20.3"
+  }
+}

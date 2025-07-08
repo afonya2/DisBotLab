@@ -36,7 +36,7 @@ export default defineNuxtConfig({
             },
         },
         components: {
-            exclude: ["Form", "FormField"],
+            exclude: ["Form", "FormField", "Editor", "Chart"],
         },
-    }
+    },
 });
