@@ -1,0 +1,14 @@
+@import '@vue-flow/core/dist/style.css';
+@import '@vue-flow/core/dist/theme-default.css';
+
+.flow {
+    width: 100vw;
+    height: 100vh;
+}
+
+:root {
+    --vf-node-bg: rgba(50, 50, 50, .5);
+    --vf-node-text: rgb(150, 150, 150);
+    --vf-connection-path: #b1b1b7;
+    --vf-handle: #555;
+}
