@@ -1,57 +1,37 @@
 <script setup lang="ts">
-    import { Menu, Divider } from 'primevue';
-    import type { MenuItem } from 'primevue/menuitem';
-    import { ref } from 'vue';
-    import 'primeicons/primeicons.css'
-
-    useHead({
-        title: 'DisBotLab',
-    })
-    const menuItems = ref<MenuItem[]>([
-        {
-            label: 'Dashboard',
-            items: [
-                { label: 'Home', icon: 'pi pi-home' },
-                { label: 'Modules', icon: 'pi pi-file' }
-            ]
-        },
-        {
-            label: 'Administration',
-            items: [
-                { label: 'Users', icon: 'pi pi-users' },
-                { label: 'Updates', icon: 'pi pi-refresh' },
-                { label: 'Logs', icon: 'pi pi-list' },
-                { label: 'Settings', icon: 'pi pi-cog' },
-            ]
-        },
-        {
-            label: 'DBL',
-            items: [
-                { label: 'Github', icon: 'pi pi-github', url: 'https://github.com/afonya2/DisBotLab', target: '_blank' },
-                { label: 'Issues', icon: 'pi pi-exclamation-triangle', url: 'https://github.com/afonya2/DisBotLab/Issues', target: '_blank' }
-            ]
-        },
-        {
-            label: 'User',
-            items: [
-                { label: 'Example User', icon: 'pi pi-user' },
-                { label: 'Sign out', icon: 'pi pi-sign-out' }
-            ]
-        }
-    ])
+    import Menu from '~/components/Menu.vue';
+    import StatCard from '~/components/StatCard.vue';
+    import ContentCard from '~/components/ContentCard.vue';
 </script>
 
 <template>
-    <Menu :model="menuItems" class="w-fit h-screen">
-        <template #start>
-            <img src="/logo.svg" alt="logo">
-            <Divider />
-        </template>
-    </Menu>
+    <Menu />
+    <main>
+        <div class="flex flex-col gap-4">
+            <h1 class="text-4xl">Home</h1>
+            <div class="flex flex-wrap mx-auto gap-4">
+                <StatCard title="Interactions" value="11" icon="pi pi-play" />
+                <StatCard title="Servers" value="1" icon="pi pi-server" />
+                <StatCard title="Modules" value="0" icon="pi pi-file" />
+                <StatCard title="Cpu Usage" value="1%" icon="pi pi-microchip" />
+                <StatCard title="Memory Usage" value="100mb" icon="pi pi-microchip" />
+                <StatCard title="Errors" value="-1" icon="pi pi-exclamation-circle" />
+                <StatCard title="Uptime" value="-1 minutes" icon="pi pi-clock" />
+            </div>
+            <ContentCard>
+                
+            </ContentCard>
+        </div>
+    </main>
 </template>
 
 <style scoped>
-    img {
-        width: 200px;
-    }
+main {
+    position: absolute;
+    top: 0;
+    left: 250px;
+    width: calc(100% - 250px);
+    height: 100%;
+    padding: 20px;
+}
 </style>

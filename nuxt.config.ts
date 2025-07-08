@@ -24,6 +24,11 @@ export default defineNuxtConfig({
     compatibilityDate: "2025-05-15",
     devtools: { enabled: true },
     modules: ["@nuxtjs/tailwindcss", "@primevue/nuxt-module"],
+    app: {
+        head: {
+            link: [ { rel: 'icon', href: '/logo.svg', type: 'image/svg+xml' } ]
+        }
+    },
     primevue: {
         options: {
             theme: {
