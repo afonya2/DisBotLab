@@ -1,19 +1,107 @@
 <script setup lang="ts">
-    import { InputText, Button } from 'primevue';
+    import utils from '../utils';
+    import { ref } from 'vue';
+
     useHead({
         title: 'DBL - Login',
+    })
+    const authLink = "https://discord.com/oauth2/authorize?client_id=1112105989311844363&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin&scope=identify"
+    let mode = ref("")
+    let atext = ref("Waiting for authentication...")
+    let ptext = ref("Processing authentication...")
+
+    function beginAuth(backup: boolean) {
+        const state = utils.generateRandomString(32)
+        localStorage.setItem("backup", backup ? "true" : "false");
+        localStorage.setItem("state", state);
+        if (backup) {
+            window.location.href = authLink + "&state=" + encodeURIComponent(state);
+        } else {
+            let win = window.open(authLink + "&state=" + encodeURIComponent(state), "_blank", "width=700,height=1000");
+            setInterval(() => {
+                if (win?.closed) {
+                    if (localStorage.getItem("token")) {
+                        window.location.href = "/";
+                    } else {
+                        atext.value = "Authentication window closed before completing the process. Please try again.";
+                    }
+                }
+            }, 1000);
+        }
+    }
+    async function processAuth() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = decodeURIComponent(urlParams.get('code') || '');
+        const state = decodeURIComponent(urlParams.get('state') || '');
+        const storedState = localStorage.getItem("state");
+        const backup = localStorage.getItem("backup") === "true";
+        if (state !== storedState) {
+            ptext.value = "Failed to verify the authentication request. Please try again.";
+            return
+        }
+        if (!code) {
+            ptext.value = "No authentication code provided. Please try again.";
+            return
+        }
+        let cont = true;
+        let req: any = await $fetch('/api/login', {
+            method: 'POST',
+            body: {
+                code: code
+            },
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            onRequestError: (error) => {
+                console.error("Request error:", error);
+                ptext.value = "Failed to authenticate. Please try again.";
+                cont = false;
+            },
+            onResponseError: (error) => {
+                console.error("Response error:", error);
+                ptext.value = "Failed to authenticate. Please try again.";
+                cont = false;
+            }
+        });
+        if (!cont) return;
+        localStorage.setItem("token", req.token);
+        localStorage.setItem("expires", req.expires);
+        localStorage.setItem("refreshToken", req.refreshToken);
+        localStorage.removeItem("state");
+        localStorage.removeItem("backup");
+        ptext.value = "Authentication successful!";
+        if (backup) {
+            window.location.href = "/";
+        } else {
+            window.close();
+        }
+    }
+    function checkMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('code')) {
+            mode.value = "process";
+            processAuth()
+        } else {
+            mode.value = "auth";
+            beginAuth(false)
+        }
+    }
+    onMounted(() => {
+        checkMode()
     })
 </script>
 
 <template>
     <div class="bg">
         <main>
-            <img src="/logo.svg" alt="logo" />
+            <img src="/logo.svg" alt="logo" class="block mx-auto" />
             <div class="card">
-                <h1 class="text-2xl">Log in</h1>
-                <InputText placeholder="Username" class="w-full" />
-                <InputText type="password" placeholder="Password" class="w-full" />
-                <Button class="ml-auto">Log in</Button>
+                <h1 class="text-4xl text-center">Log in</h1>
+                <ClientOnly>
+                    <p class="text-xl text-center" v-if="mode == 'auth'">{{ atext }}</p>
+                    <p class="text-center" v-if="mode == 'auth'">If the window didn't open <a href="#" @click="beginAuth(true)">click me!</a></p>
+                    <p class="text-xl text-center" v-if="mode == 'process'">{{ ptext }}</p>
+                </ClientOnly>
             </div>
         </main>
     </div>
@@ -29,9 +117,10 @@
 }
 main {
     width: 100%;
-    position: relative;
+    position: absolute;
     top: 50%;
-    transform: translateY(-50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, .7);
     backdrop-filter: blur(10px) saturate(150%);
     padding: 20px;
@@ -44,7 +133,10 @@ main {
 img {
     width: 400px;
 }
-
+a {
+    color: rgb(50, 100, 200);
+    text-decoration: underline;
+}
 @media (width >= 48rem) {
     main {
         margin-left: 25px;
