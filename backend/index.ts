@@ -58,6 +58,14 @@ function dbSelect(command: string, ...args: any[]): Promise<any[]> {
 
 app.use(express.json())
 
+app.get('/info', (req: Request, res: Response) => {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        version: `DisBotLab v${config.version}`,
+        authLink: config.authLink
+    }))
+})
+
 app.post('/login', async (req: Request, res: Response) => {
     if (req.body.code == undefined || typeof req.body.code !== 'string' || req.body.code.length === 0) {
         res.writeHead(400, { 'content-type': 'application/json' })

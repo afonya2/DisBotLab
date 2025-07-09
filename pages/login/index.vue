@@ -5,15 +5,21 @@
     useHead({
         title: 'DBL - Login',
     })
-    const authLink = "https://discord.com/oauth2/authorize?client_id=1112105989311844363&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin&scope=identify"
     let mode = ref("")
     let atext = ref("Waiting for authentication...")
     let ptext = ref("Processing authentication...")
 
-    function beginAuth(backup: boolean) {
+    async function beginAuth(backup: boolean) {
         const state = utils.generateRandomString(32)
         localStorage.setItem("backup", backup ? "true" : "false");
         localStorage.setItem("state", state);
+        let authReq = await utils.apiGet('/api/info');
+        if (!authReq.ok) {
+            console.error("Failed to get auth link:", authReq.error);
+            atext.value = "Failed to get authentication link. Please try again later.";
+            return;
+        }
+        let authLink = authReq.body.authLink;
         if (backup) {
             window.location.href = authLink + "&state=" + encodeURIComponent(state);
         } else {
@@ -84,10 +90,10 @@
             beginAuth(false)
         }
     }
-    async function checkAuth() {
-        
-    }
-    onMounted(() => {
+    onMounted(async () => {
+        if (await utils.checkAuth()) {
+            window.location.href = "/";
+        }
         checkMode()
     })
 </script>

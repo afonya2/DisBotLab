@@ -2,6 +2,17 @@
     import Menu from '~/components/Menu.vue';
     import StatCard from '~/components/StatCard.vue';
     import ContentCard from '~/components/ContentCard.vue';
+    import utils from './utils';
+
+    useHead({
+        title: 'DBL - Home',
+    });
+
+    onMounted(async () => {
+        if (!await utils.checkAuth()) {
+            window.location.href = "/login";
+        }
+    })
 </script>
 
 <template>

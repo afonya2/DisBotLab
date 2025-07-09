@@ -35,7 +35,76 @@ async function getToken(): Promise<string> {
     }
 }
 
+async function checkAuth(): Promise<boolean> {
+    const token = await getToken();
+    if (!token) {
+        console.error("No valid token found");
+        return false;
+    }
+    let req = await fetch("/api/checkAuth", {
+        method: "GET",
+        headers: {
+            "Authorization": token,
+        },
+    });
+    let res = await req.json();
+    if (!res.ok) {
+        console.error("Authentication check:", res);
+        return false;
+    } else {
+        return true;
+    }
+}
+
+async function apiGet(url: string, headers = {}): Promise<{ok: boolean, body: any, error?: string}> {
+    const token = await getToken();
+    if (!token) {
+        console.error("No valid token found for API request");
+        return { ok: false, body: {}, error: "No valid token" };
+    }
+    headers = {
+        ...headers,
+        "Authorization": token,
+    };
+    let req = await fetch(url, {
+        method: "GET",
+        headers: headers,
+    });
+    let res = await req.json();
+    if (!res.ok) {
+        console.error("API GET request failed:", res.error);
+        return { ok: false, body: res, error: res.error };
+    }
+    return { ok: true, body: res.body };
+}
+
+async function apiPost(url: string, data: string, method = "POST", headers = {}): Promise<{ok: boolean, body: any, error?: string}> {
+    const token = await getToken();
+    if (!token) {
+        console.error("No valid token found for API request");
+        return { ok: false, body: {}, error: "No valid token" };
+    }
+    headers = {
+        ...headers,
+        "Authorization": token,
+    };
+    let req = await fetch(url, {
+        method: method,
+        headers: headers,
+        body: data
+    });
+    let res = await req.json();
+    if (!res.ok) {
+        console.error(`API ${method} request failed:`, res.error);
+        return { ok: false, body: res, error: res.error };
+    }
+    return { ok: true, body: res.body };
+}
+
 export default {
     generateRandomString,
-    getToken
+    getToken,
+    checkAuth,
+    apiGet,
+    apiPost
 }
