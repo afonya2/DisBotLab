@@ -30,7 +30,6 @@ function request(url: string, options: https.RequestOptions, body?: String): Pro
             })
             res.on('error', (err) => {
                 console.log(err);
-                
                 reject(err)
             })
         })
@@ -54,6 +53,30 @@ function dbSelect(command: string, ...args: any[]): Promise<any[]> {
             resolve(rows)
         })
     })
+}
+
+let userIdCache: { [key: string]: string } = {}
+async function getUserIdFromToken(token: string): Promise<string> {
+    if (userIdCache[token]) {
+        return userIdCache[token]
+    }
+    let userReq = await request('https://discord.com/api/users/@me', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    try {
+        let userReqP = JSON.parse(userReq)
+        if (userReqP.id == undefined) {
+            return '0'
+        }
+        userIdCache[token] = userReqP.id
+        return userReqP.id
+    } catch (e) {
+        console.error("Failed to parse user request:", e);
+        return '0'
+    }
 }
 
 app.use(express.json())
@@ -92,14 +115,8 @@ app.post('/login', async (req: Request, res: Response) => {
         return
     }
     
-    let userReq = await request('https://discord.com/api/users/@me', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${discordReq.access_token}`
-        }
-    })
-    let userReqP = JSON.parse(userReq)
-    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userReqP.id)
+    let userId = await getUserIdFromToken(discordReq.access_token)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
     if (trusted.length == 0) {
         res.writeHead(403, { 'content-type': 'application/json' })
         res.end(sendResponse(false, {}, 'User not trusted'))
@@ -119,19 +136,8 @@ app.get('/checkAuth', async (req: Request, res: Response) => {
         res.end(sendResponse(false, {}, 'Invalid token'))
         return
     }
-    let userReq = await request('https://discord.com/api/users/@me', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${req.headers.authorization}`
-        }
-    })
-    let userReqP = JSON.parse(userReq)
-    if (userReqP.id == undefined) {
-        res.writeHead(403, { 'content-type': 'application/json' })
-        res.end(sendResponse(false, {}, 'Invalid token'))
-        return
-    }
-    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userReqP.id)
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
     if (trusted.length == 0) {
         res.writeHead(403, { 'content-type': 'application/json' })
         res.end(sendResponse(false, {}, 'User not trusted'))
@@ -166,14 +172,8 @@ app.post('/refreshToken', async (req: Request, res: Response) => {
         return
     }
     
-    let userReq = await request('https://discord.com/api/users/@me', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${discordReq.access_token}`
-        }
-    })
-    let userReqP = JSON.parse(userReq)
-    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userReqP.id)
+    let userId = await getUserIdFromToken(discordReq.access_token)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
     if (trusted.length == 0) {
         res.writeHead(403, { 'content-type': 'application/json' })
         res.end(sendResponse(false, {}, 'User not trusted'))
@@ -184,6 +184,32 @@ app.post('/refreshToken', async (req: Request, res: Response) => {
         token: discordReq.access_token,
         expires: discordReq.expires_in,
         refreshToken: discordReq.refresh_token
+    }))
+})
+
+app.get('/status', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    let memoryUsage = process.memoryUsage()
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        uptime: process.uptime(),
+        memoryUsage: Math.floor(memoryUsage.heapUsed / 1024 / 1024 * 100)/100,
+        interactions: 0,
+        servers: 0,
+        modules: 0,
+        errors: 0
     }))
 })
 

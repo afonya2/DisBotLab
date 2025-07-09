@@ -7,11 +7,47 @@
     useHead({
         title: 'DBL - Home',
     });
+    let status = ref({
+        interactions: 0,
+        servers: 0,
+        modules: 0,
+        memoryUsage: 0,
+        errors: 0,
+        uptime: 0
+    })
 
+    function uptimeToStr(uptime: number): string {
+        if (uptime < 60) {
+            return `${Math.floor(uptime)} seconds`;
+        } else if (uptime < 3600) {
+            return `${Math.floor(uptime / 60)} minutes`;
+        } else if (uptime < 86400) {
+            return `${Math.floor(uptime / 3600)} hours`;
+        } else {
+            return `${Math.floor(uptime / 86400)} days`;
+        }
+    }
+
+    async function getStatus() {
+        let info = await utils.apiGet('/api/status');
+        if (info.ok) {
+            status.value = {
+                interactions: info.body.interactions,
+                servers: info.body.servers,
+                modules: info.body.modules,
+                memoryUsage: info.body.memoryUsage,
+                errors: info.body.errors,
+                uptime: info.body.uptime
+            };
+        } else {
+            console.error("Failed to get info:", info.error);
+        }
+    }
     onMounted(async () => {
         if (!await utils.checkAuth()) {
             window.location.href = "/login";
         }
+        getStatus()
     })
 </script>
 
@@ -21,13 +57,14 @@
         <div class="flex flex-col gap-4">
             <h1 class="text-4xl">Home</h1>
             <div class="flex flex-wrap mx-auto gap-4">
-                <StatCard title="Interactions" value="11" icon="pi pi-play" />
-                <StatCard title="Servers" value="1" icon="pi pi-server" />
-                <StatCard title="Modules" value="0" icon="pi pi-file" />
-                <StatCard title="Cpu Usage" value="1%" icon="pi pi-microchip" />
-                <StatCard title="Memory Usage" value="100mb" icon="pi pi-microchip" />
-                <StatCard title="Errors" value="999" icon="pi pi-exclamation-circle" warn="true" />
-                <StatCard title="Uptime" value="-1 minutes" icon="pi pi-clock" />
+                <ClientOnly>
+                    <StatCard title="Interactions" :value="`${status.interactions}`" icon="pi pi-play" />
+                    <StatCard title="Servers" :value="`${status.servers}`" icon="pi pi-server" />
+                    <StatCard title="Modules" :value="`${status.modules}`" icon="pi pi-file" />
+                    <StatCard title="Memory Usage" :value="`${status.memoryUsage} MB`" icon="pi pi-microchip" />
+                    <StatCard title="Errors" :value="`${status.errors}`" icon="pi pi-exclamation-circle" warn="true" />
+                    <StatCard title="Uptime" :value="uptimeToStr(status.uptime)" icon="pi pi-clock" />
+                </ClientOnly>
             </div>
             <ContentCard class="flex flex-wrap gap-4">
                 <ContentCard class="w-full lg:w-[calc(50%-1rem)] flex items-center gap-4">
