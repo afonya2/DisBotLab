@@ -2,10 +2,12 @@ import express, { type Request, type Response } from 'express'
 import fs from 'fs'
 import sqlite from 'sqlite3'
 import https from 'https'
+import { Client } from 'discord.js'
 
 const app = express()
 const config = JSON.parse(fs.readFileSync('../config.json', 'utf-8'))
 const db = new sqlite.Database('./database.db')
+const client = new Client({ intents: [] })
 
 function sendResponse(ok: boolean, data: any, error?: string) {
     let res: any = {
@@ -55,10 +57,10 @@ function dbSelect(command: string, ...args: any[]): Promise<any[]> {
     })
 }
 
-let userIdCache: { [key: string]: string } = {}
+let userIdCache: { [key: string]: { id: string, expires: number } } = {}
 async function getUserIdFromToken(token: string): Promise<string> {
-    if (userIdCache[token]) {
-        return userIdCache[token]
+    if (userIdCache[token] && userIdCache[token].expires > Date.now()) {
+        return userIdCache[token].id
     }
     let userReq = await request('https://discord.com/api/users/@me', {
         method: 'GET',
@@ -71,7 +73,10 @@ async function getUserIdFromToken(token: string): Promise<string> {
         if (userReqP.id == undefined) {
             return '0'
         }
-        userIdCache[token] = userReqP.id
+        userIdCache[token] = {
+            id: userReqP.id,
+            expires: Date.now() + 60 * 60 * 1000
+        }
         return userReqP.id
     } catch (e) {
         console.error("Failed to parse user request:", e);
@@ -202,17 +207,23 @@ app.get('/status', async (req: Request, res: Response) => {
     }
 
     let memoryUsage = process.memoryUsage()
+    let interactions = await dbSelect('SELECT COUNT(*) as count FROM interactions')
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(sendResponse(true, {
         uptime: process.uptime(),
         memoryUsage: Math.floor(memoryUsage.heapUsed / 1024 / 1024 * 100)/100,
-        interactions: 0,
-        servers: 0,
+        interactions: interactions[0].count,
+        servers: client.guilds.cache.size,
         modules: 0,
         errors: 0
     }))
 })
 
+client.once('ready', () => {
+    console.log(`Bot logged in as ${client.user?.tag}`);
+})
+
 app.listen(config.backendPort, () => {
     console.log(`Backend running at http://localhost:${config.backendPort}`)
 })
+client.login(config.token)
