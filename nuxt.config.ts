@@ -39,4 +39,15 @@ export default defineNuxtConfig({
             exclude: ["Form", "FormField", "Editor", "Chart"],
         },
     },
+    vite: {
+        server: {
+            proxy: {
+                "/api": {
+                    target: "http://localhost:1020",
+                    changeOrigin: true,
+                    rewrite: (path) => path.replace(/^\/api/, ""),
+                },
+            }
+        }
+    }
 });

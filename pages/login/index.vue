@@ -43,30 +43,28 @@
             ptext.value = "No authentication code provided. Please try again.";
             return
         }
-        let cont = true;
-        let req: any = await $fetch('/api/login', {
+        let req: any = await fetch('/api/login', {
             method: 'POST',
-            body: {
+            body: JSON.stringify({
                 code: code
-            },
+            }),
             headers: {
                 'Content-Type': 'application/json'
-            },
-            onRequestError: (error) => {
-                console.error("Request error:", error);
-                ptext.value = "Failed to authenticate. Please try again.";
-                cont = false;
-            },
-            onResponseError: (error) => {
-                console.error("Response error:", error);
-                ptext.value = "Failed to authenticate. Please try again.";
-                cont = false;
             }
         });
-        if (!cont) return;
-        localStorage.setItem("token", req.token);
-        localStorage.setItem("expires", req.expires);
-        localStorage.setItem("refreshToken", req.refreshToken);
+        let res = await req.json();
+        if (!res.ok) {
+            console.error("Authentication failed:", res.error);
+            if (res.error == 'User not trusted') {
+                ptext.value = "You are not trusted to use this application.";
+            } else {
+                ptext.value = "Failed to authenticate. Please try again.";
+            }
+            return
+        }
+        localStorage.setItem("token", res.body.token);
+        localStorage.setItem("expires", (Number(res.body.expires)+Date.now()).toString());
+        localStorage.setItem("refreshToken", res.body.refreshToken);
         localStorage.removeItem("state");
         localStorage.removeItem("backup");
         ptext.value = "Authentication successful!";
@@ -85,6 +83,9 @@
             mode.value = "auth";
             beginAuth(false)
         }
+    }
+    async function checkAuth() {
+        
     }
     onMounted(() => {
         checkMode()
