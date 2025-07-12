@@ -219,6 +219,89 @@ app.get('/status', async (req: Request, res: Response) => {
     }))
 })
 
+app.get('/users', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+    
+    let users = await dbSelect('SELECT * FROM users')
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, users))
+})
+
+app.delete('/user', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+    
+    if (req.body.id == undefined || typeof req.body.id !== 'string' || req.body.id.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid user ID'))
+        return
+    }
+    let userExists = await dbSelect('SELECT * FROM users WHERE id = ?', req.body.id)
+    if (userExists.length == 0) {
+        res.writeHead(404, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not found'))
+        return
+    }
+    db.run('DELETE FROM users WHERE id = ?', req.body.id)
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        id: req.body.id
+    }))
+})
+
+app.post('/user', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+    
+    if (req.body.id == undefined || typeof req.body.id !== 'string' || req.body.id.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid user ID'))
+        return
+    }
+    let userExists = await dbSelect('SELECT * FROM users WHERE id = ?', req.body.id)
+    if (userExists.length > 0) {
+        res.writeHead(409, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User already exists'))
+        return
+    }
+    db.run('INSERT INTO users(id) VALUES(?)', req.body.id)
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        id: req.body.id
+    }))
+})
+
 client.once('ready', () => {
     console.log(`Bot logged in as ${client.user?.tag}`);
 })

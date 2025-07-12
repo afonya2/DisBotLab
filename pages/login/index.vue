@@ -69,7 +69,7 @@
             return
         }
         localStorage.setItem("token", res.body.token);
-        localStorage.setItem("expires", (Number(res.body.expires)+Date.now()).toString());
+        localStorage.setItem("expires", (Number(res.body.expires)*1000+Date.now()).toString());
         localStorage.setItem("refreshToken", res.body.refreshToken);
         localStorage.removeItem("state");
         localStorage.removeItem("backup");
@@ -90,6 +90,14 @@
             beginAuth(false)
         }
     }
+    async function signout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("expires");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("state");
+        localStorage.removeItem("backup");
+        window.location.href = "";
+    }
     onMounted(async () => {
         if (await utils.checkAuth()) {
             window.location.href = "/";
@@ -108,6 +116,7 @@
                     <p class="text-xl text-center" v-if="mode == 'auth'">{{ atext }}</p>
                     <p class="text-center" v-if="mode == 'auth'">If the window didn't open <a href="#" @click="beginAuth(true)">click me!</a></p>
                     <p class="text-xl text-center" v-if="mode == 'process'">{{ ptext }}</p>
+                    <p class="text-center">Wrong account? <a href="#" @click="signout()">Sign out!</a></p>
                 </ClientOnly>
             </div>
         </main>

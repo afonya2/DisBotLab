@@ -27,7 +27,7 @@ async function getToken(): Promise<string> {
             return ""
         }
         localStorage.setItem("token", res.body.token);
-        localStorage.setItem("expires", (Number(res.body.expires) + Date.now()).toString());
+        localStorage.setItem("expires", (Number(res.body.expires) * 1000 + Date.now()).toString());
         localStorage.setItem("refreshToken", res.body.refreshToken);
         return res.body.token;
     } else {
@@ -58,13 +58,9 @@ async function checkAuth(): Promise<boolean> {
 
 async function apiGet(url: string, headers = {}): Promise<{ok: boolean, body: any, error?: string}> {
     const token = await getToken();
-    if (!token) {
-        console.error("No valid token found for API request");
-        return { ok: false, body: {}, error: "No valid token" };
-    }
     headers = {
         ...headers,
-        "Authorization": token,
+        "Authorization": token || "",
     };
     let req = await fetch(url, {
         method: "GET",
@@ -87,6 +83,7 @@ async function apiPost(url: string, data: string, method = "POST", headers = {})
     headers = {
         ...headers,
         "Authorization": token,
+        "Content-Type": "application/json",
     };
     let req = await fetch(url, {
         method: method,

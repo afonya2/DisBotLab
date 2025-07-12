@@ -59,10 +59,10 @@
             <div class="flex flex-wrap mx-auto gap-4">
                 <ClientOnly>
                     <StatCard title="Interactions" :value="`${status.interactions}`" icon="pi pi-play" />
-                    <StatCard title="Servers" :value="`${status.servers}`" icon="pi pi-server" />
+                    <StatCard title="Servers" :value="`${status.servers}`" icon="pi pi-server" :warn="status.servers > 1500" />
                     <StatCard title="Modules" :value="`${status.modules}`" icon="pi pi-file" />
-                    <StatCard title="Memory Usage" :value="`${status.memoryUsage} MB`" icon="pi pi-microchip" />
-                    <StatCard title="Errors" :value="`${status.errors}`" icon="pi pi-exclamation-circle" warn="true" />
+                    <StatCard title="Memory Usage" :value="`${status.memoryUsage} MB`" icon="pi pi-microchip" :warn="status.memoryUsage > 512" />
+                    <StatCard title="Errors" :value="`${status.errors}`" icon="pi pi-exclamation-circle" :warn="status.errors > 10" />
                     <StatCard title="Uptime" :value="uptimeToStr(status.uptime)" icon="pi pi-clock" />
                 </ClientOnly>
             </div>
