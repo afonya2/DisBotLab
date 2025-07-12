@@ -302,6 +302,28 @@ app.post('/user', async (req: Request, res: Response) => {
     }))
 })
 
+app.get('/botinfo', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+    
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        id: client.user?.id,
+        tag: client.user?.tag,
+        avatar: client.user?.avatarURL()
+    }))
+})
+
 client.once('ready', () => {
     console.log(`Bot logged in as ${client.user?.tag}`);
 })

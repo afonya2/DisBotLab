@@ -47,7 +47,7 @@
         window.location.href = "/login";
     }
 
-    onMounted(async () => {
+    /*onMounted(async () => {
         let mereq = await fetch("https://discord.com/api/users/@me", {
             headers: {
                 'Authorization': `Bearer ${await utils.getToken()}`
@@ -58,7 +58,7 @@
             if (!menuItems.value[3].items) return
             menuItems.value[3].items[0].label = meres.username;
         }
-    });
+    });*/
 </script>
 
 <template>

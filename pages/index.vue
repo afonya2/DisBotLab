@@ -112,6 +112,7 @@ main {
     width: calc(100% - 250px);
     height: 100%;
     padding: 20px;
+    overflow: auto;
 }
 a {
     color: rgb(50, 100, 200);
