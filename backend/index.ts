@@ -463,6 +463,143 @@ app.post('/restart', async (req: Request, res: Response) => {
     }, 1000)
 })
 
+app.get('/modules', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    let modules = await dbSelect('SELECT * FROM modules')
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, modules))
+})
+
+app.post('/module', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    if (req.body.name == undefined || typeof req.body.name !== 'string' || req.body.name.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module name'))
+        return
+    }
+    if (req.body.description == undefined || typeof req.body.description !== 'string' || req.body.description.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module description'))
+        return
+    }
+    db.run('INSERT INTO modules(name, description, enabled) VALUES(?, ?, ?)', req.body.name, req.body.description, 1)
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        name: req.body.name,
+        description: req.body.description,
+        enabled: true
+    }))
+})
+
+app.patch('/module/:id', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    if (req.body.name == undefined || typeof req.body.name !== 'string' || req.body.name.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module name'))
+        return
+    }
+    if (req.body.description == undefined || typeof req.body.description !== 'string' || req.body.description.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module description'))
+        return
+    }
+    if (req.body.enabled == undefined || typeof req.body.enabled !== 'boolean') {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module enabled status'))
+        return
+    }
+    if (req.params.id == undefined || typeof req.params.id !== 'string' || req.params.id.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module ID'))
+        return
+    }
+    let moduleExists = await dbSelect('SELECT * FROM modules WHERE id = ?', req.params.id)
+    if (moduleExists.length == 0) {
+        res.writeHead(404, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Module not found'))
+        return
+    }
+    db.run('UPDATE modules SET name = ?, description = ?, enabled = ? WHERE id = ?', req.body.name, req.body.description, req.body.enabled, req.params.id)
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        id: req.params.id,
+        name: req.body.name,
+        description: req.body.description,
+        enabled: moduleExists[0].enabled
+    }))
+})
+
+app.delete('/module/:id', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    if (req.params.id == undefined || typeof req.params.id !== 'string' || req.params.id.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module ID'))
+        return
+    }
+    let moduleExists = await dbSelect('SELECT * FROM modules WHERE id = ?', req.params.id)
+    if (moduleExists.length == 0) {
+        res.writeHead(404, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Module not found'))
+        return
+    }
+    db.run('DELETE FROM modules WHERE id = ?', req.params.id)
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        id: req.params.id,
+        name: moduleExists[0].name,
+        description: moduleExists[0].description,
+        enabled: moduleExists[0].enabled
+    }))
+})
+
 client.once('ready', () => {
     console.log(`Bot logged in as ${client.user?.tag}`);
 })
