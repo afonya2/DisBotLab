@@ -11,6 +11,15 @@
     let botinfo: Ref<{ id: string, tag: string, avatar: string }> = ref({ id: '', tag: '', avatar: '' });
     let dblVersion: Ref<string> = ref('Loading...');
     let updateAvailable: Ref<boolean> = ref(false);
+    let settings: Ref<{ clientId: string, clientSecret: string, redirectUri: string, authLink: string, token: string, backendPort: string, frontendPort: string }> = ref({
+        clientId: '',
+        clientSecret: '',
+        redirectUri: '',
+        authLink: '',
+        token: '',
+        backendPort: '',
+        frontendPort: ''
+    });
 
     async function getbotinfo() {
         let req = await utils.apiGet('/api/botinfo');
@@ -34,12 +43,31 @@
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load info, check console for more information.' });
         }
     }
+    async function getSettings() {
+        let req = await utils.apiGet('/api/settings');
+        if (req.ok) {
+            settings.value = req.body;
+        } else {
+            console.error("Failed to get settings:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load settings, check console for more information.' });
+        }
+    }
+    async function saveSettings() {
+        let req = await utils.apiPost('/api/settings', JSON.stringify(settings.value));
+        if (req.ok) {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully.' });
+        } else {
+            console.error("Failed to save settings:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings: ' + req.error });
+        }
+    }
     onMounted(async () => {
         if (!await utils.checkAuth()) {
             window.location.href = "/login";
         }
         getbotinfo()
-        getInfo();
+        getInfo()
+        getSettings()
     })
 </script>
 
@@ -90,42 +118,42 @@
                 <h2 class="text-2xl mb-4">Settings</h2>
                 <div class="flex flex-wrap items-center">
                     <p class="text-lg">Client ID:</p>
-                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Client ID" />
+                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Client ID" v-model="settings.clientId" />
                 </div>
                 <Divider />
                 <div class="flex flex-wrap items-center">
                     <p class="text-lg">Client Secret:</p>
-                    <InputText class="ml-auto max-w-full w-96" type="password" placeholder="Client Secret" />
+                    <InputText class="ml-auto max-w-full w-96" type="password" placeholder="Client Secret" v-model="settings.clientSecret" />
                 </div>
                 <Divider />
                 <div class="flex flex-wrap items-center">
                     <p class="text-lg">Redirect URI:</p>
-                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Redirect URI" />
+                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Redirect URI" v-model="settings.redirectUri" />
                 </div>
                 <Divider />
                 <div class="flex flex-wrap items-center">
                     <p class="text-lg">Auth Link:</p>
-                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Auth Link" />
+                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Auth Link" v-model="settings.authLink" />
                 </div>
                 <Divider />
                 <div class="flex flex-wrap items-center">
                     <p class="text-lg">Token:</p>
-                    <InputText class="ml-auto max-w-full w-96" type="password" placeholder="Token" />
+                    <InputText class="ml-auto max-w-full w-96" type="password" placeholder="Token" v-model="settings.token" />
                 </div>
                 <Divider />
                 <div class="flex flex-wrap items-center">
                     <p class="text-lg">Backend port:</p>
-                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Backend port" />
+                    <InputText class="ml-auto max-w-full w-96" type="number" placeholder="Backend port" v-model="settings.backendPort" />
                 </div>
                 <Divider />
                 <div class="flex flex-wrap items-center">
                     <p class="text-lg">Frontend port:</p>
-                    <InputText class="ml-auto max-w-full w-96" type="text" placeholder="Frontend port" />
+                    <InputText class="ml-auto max-w-full w-96" type="number" placeholder="Frontend port" v-model="settings.frontendPort" />
                 </div>
                 <Divider />
                 <div class="ml-auto w-fit">
-                    <Button severity="warn"><i class="pi pi-undo"></i>Cancel changes</Button>
-                    <Button class="ml-2"><i class="pi pi-save"></i>Save</Button>
+                    <Button severity="warn" @click="getSettings()"><i class="pi pi-undo"></i>Cancel changes</Button>
+                    <Button class="ml-2" @click="saveSettings()"><i class="pi pi-save"></i>Save</Button>
                 </div>
             </ContentCard>
         </div>

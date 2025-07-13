@@ -3,6 +3,7 @@ import fs from 'fs'
 import sqlite from 'sqlite3'
 import https from 'https'
 import { Client } from 'discord.js'
+import { version } from 'os'
 
 const app = express()
 const config = JSON.parse(fs.readFileSync('../config.json', 'utf-8'))
@@ -322,6 +323,102 @@ app.get('/botinfo', async (req: Request, res: Response) => {
         tag: client.user?.tag,
         avatar: client.user?.avatarURL()
     }))
+})
+
+app.get('/settings', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {
+        backendPort: config.backendPort,
+        frontendPort: config.frontendPort,
+        clientId: config.clientId,
+        clientSecret: "__NOT_CHANGED__",
+        redirectUri: config.redirectUri,
+        authLink: config.authLink,
+        token: "__NOT_CHANGED__",
+    }))
+})
+
+app.post('/settings', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    if (req.body.backendPort == undefined || typeof req.body.backendPort !== 'number' || req.body.backendPort.length === 0 || isNaN(req.body.backendPort) || req.body.backendPort < 1 || req.body.backendPort > 65535) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid backend port'))
+        return
+    }
+    if (req.body.frontendPort == undefined || typeof req.body.frontendPort !== 'number' || req.body.frontendPort.length === 0 || isNaN(req.body.backendPort) || req.body.backendPort < 1 || req.body.backendPort > 65535) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid frontend port'))
+        return
+    }
+    if (req.body.clientId == undefined || typeof req.body.clientId !== 'string' || req.body.clientId.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid client ID'))
+        return
+    }
+    if (req.body.clientSecret == undefined || typeof req.body.clientSecret !== 'string' || req.body.clientSecret.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid client secret'))
+        return
+    }
+    if (req.body.redirectUri == undefined || typeof req.body.redirectUri !== 'string' || req.body.redirectUri.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid redirect URI'))
+        return
+    }
+    if (req.body.authLink == undefined || typeof req.body.authLink !== 'string' || req.body.authLink.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid auth link'))
+        return
+    }
+    if (req.body.token == undefined || typeof req.body.token !== 'string' || req.body.token.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let newSettings = {
+        backendPort: req.body.backendPort,
+        frontendPort: req.body.frontendPort,
+        clientId: req.body.clientId,
+        clientSecret: req.body.clientSecret,
+        redirectUri: req.body.redirectUri,
+        authLink: req.body.authLink,
+        token: req.body.token,
+        version: config.version
+    }
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, newSettings))
+    if (newSettings.clientSecret === "__NOT_CHANGED__") {
+        newSettings.clientSecret = config.clientSecret
+    }
+    if (newSettings.token === "__NOT_CHANGED__") {
+        newSettings.token = config.token
+    }
+    fs.writeFileSync('../config.json', JSON.stringify(newSettings, null, 4), 'utf-8')
 })
 
 client.once('ready', () => {
