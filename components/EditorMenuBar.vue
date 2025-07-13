@@ -5,6 +5,7 @@
     import 'primeicons/primeicons.css'
     
     const props = defineProps(["editing"])
+    const emits = defineEmits(['save', 'exit']);
     const menuItems = ref<MenuItem[]>([])
 </script>
 
@@ -15,8 +16,8 @@
             <h2 class="text-lg ml-4">Editing: {{ props.editing }}</h2>
         </template>
         <template #end>
-            <Button severity="secondary"><i class="pi pi-times"></i>Exit</Button>
-            <Button class="ml-2"><i class="pi pi-save"></i>Save</Button>
+            <Button severity="secondary" @click="emits('exit', $event)"><i class="pi pi-times"></i>Exit</Button>
+            <Button class="ml-2" @click="emits('save', $event)"><i class="pi pi-save"></i>Save</Button>
         </template>
     </Menubar>
 </template>

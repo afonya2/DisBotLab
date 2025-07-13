@@ -8,6 +8,7 @@ interface DBLNode {
     description: string;
     category: DBLNodeCategory;
     variant: string;
+    editor: string
 }
 
 const DBLNodes: { [key: string]: DBLNode } = {
@@ -15,13 +16,15 @@ const DBLNodes: { [key: string]: DBLNode } = {
         name: "On command",
         description: "Triggers when a command is executed.",
         category: DBLNodeCategory.Event,
-        variant: "input"
+        variant: "input",
+        editor: "command"
     },
     "sendMessage": {
         name: "Send message",
         description: "Sends a message to a channel.",
         category: DBLNodeCategory.Action,
-        variant: "default"
+        variant: "default",
+        editor: "message"
     }
 }
 
