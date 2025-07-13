@@ -61,6 +61,25 @@
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings: ' + req.error });
         }
     }
+    async function reloadConfig() {
+        let req = await utils.apiPost('/api/reload', JSON.stringify({}));
+        if (req.ok) {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Configuration reloaded successfully.' });
+            getSettings();
+        } else {
+            console.error("Failed to reload config:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to reload configuration: ' + req.error });
+        }
+    }
+    async function restart() {
+        let req = await utils.apiPost('/api/restart', JSON.stringify({}));
+        if (req.ok) {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Bot restarted successfully.' });
+        } else {
+            console.error("Failed to restart bot:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to restart bot: ' + req.error });
+        }
+    }
     onMounted(async () => {
         if (!await utils.checkAuth()) {
             window.location.href = "/login";
@@ -109,8 +128,8 @@
             <ContentCard class="flex flex-col gap-2">
                 <h2 class="text-2xl">System</h2>
                 <div class="flex items-center gap-2">
-                    <Button class="w-fit" severity="danger"><i class="pi pi-refresh"></i>Restart</Button>
-                    <Button class="w-fit" severity="warn"><i class="pi pi-refresh"></i>Reload config</Button>
+                    <Button class="w-fit" severity="danger" @click="restart()"><i class="pi pi-refresh"></i>Restart</Button>
+                    <Button class="w-fit" severity="warn" @click="reloadConfig()"><i class="pi pi-refresh"></i>Reload config</Button>
                 </div>
             </ContentCard>
 

@@ -6,7 +6,7 @@ import { Client } from 'discord.js'
 import { version } from 'os'
 
 const app = express()
-const config = JSON.parse(fs.readFileSync('../config.json', 'utf-8'))
+let config = JSON.parse(fs.readFileSync('../config.json', 'utf-8'))
 const db = new sqlite.Database('./database.db')
 const client = new Client({ intents: [] })
 
@@ -419,6 +419,48 @@ app.post('/settings', async (req: Request, res: Response) => {
         newSettings.token = config.token
     }
     fs.writeFileSync('../config.json', JSON.stringify(newSettings, null, 4), 'utf-8')
+    config = newSettings
+})
+
+app.post('/reload', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    config = JSON.parse(fs.readFileSync('../config.json', 'utf-8'))
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {}))
+})
+
+app.post('/restart', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    await client.destroy()
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {}))
+    setTimeout(() => {
+        process.exit(69)
+    }, 1000)
 })
 
 client.once('ready', () => {
