@@ -2,8 +2,11 @@
 @import '@vue-flow/core/dist/theme-default.css';
 
 .flow {
-    width: 100vw;
-    height: 100vh;
+    position: absolute;
+    left: 250px;
+    top: 50px;
+    width: calc(100vw - 250px);
+    height: calc(100vh - 50px);
 }
 
 :root {
