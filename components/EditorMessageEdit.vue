@@ -1,10 +1,17 @@
 <script setup lang="ts">
-    import { InputText } from 'primevue';
+    import { InputText, FloatLabel } from 'primevue';
     const props = defineProps(["nodeData"])
 </script>
 
 <template>
-    <InputText v-model="props.nodeData.save.content" type="text" placeholder="Content" />
+    <FloatLabel variant="on">
+        <InputText id="content" v-model="props.nodeData.save.content" type="text" />
+        <label for="content">Content</label>
+    </FloatLabel>
+    <FloatLabel variant="on">
+        <InputText id="channel" v-model="props.nodeData.save.channel" type="text" />
+        <label for="channel">Channel</label>
+    </FloatLabel>
 </template>
 
 <style scoped>

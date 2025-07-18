@@ -9,45 +9,16 @@
     import EditorMenu from "~/components/EditorMenu.vue";
     import { DBLNodes, CategoryIcons } from "./NodeTypes";
     import { Dialog, Button, ConfirmPopup, Toast, useConfirm, useToast } from "primevue";
-import { on } from "@primeuix/themes/aura/floatlabel";
 
-    const baseNodes = ref<Node[]>([
-        {
-            id: "1",
-            type: "input",
-            data: { label: "Node 1" },
-            position: { x: 250, y: 5 }
-        },
-        {
-            id: "2",
-            data: { label: "Node 2" },
-            position: { x: 100, y: 100 },
-            sourcePosition: Position.Left,
-            targetPosition: Position.Right,
-        },
-        {
-            id: "3",
-            data: { label: "Node 3" },
-            position: { x: 400, y: 100 },
-        },
-        {
-            id: "4",
-            type: "output",
-            data: { label: "Node 4" },
-            position: { x: 400, y: 200 },
-        },
-    ]);
-    const baseEdges = ref<Edge[]>([
-        { id: "e1-2", source: "1", target: "2", selectable: false },
-        { id: "e1-3", source: "1", target: "3", type: "smoothstep" },
-        { id: "e3-4", source: "3", target: "4", animated: true },
-    ]);
+    const baseNodes = ref<Node[]>([]);
+    const baseEdges = ref<Edge[]>([]);
     const { screenToFlowCoordinate, addNodes, addEdges, nodes, edges, onNodeClick, onEdgeClick, onNodeDrag } = useVueFlow()
     const nodeEdit = ref(false)
     const nodeEditId = ref("")
     const unsaved = ref(false);
     const confirm = useConfirm();
     const toast = useToast();
+    const moduleId = ref(0);
 
     function onConnect(params: Connection) {
         let alreadyExists = edges.value.findIndex(edge => edge.target === params.target);
@@ -73,8 +44,8 @@ import { on } from "@primeuix/themes/aura/floatlabel";
         }
         addNodes([
             {
-                id: (nodes.value.length > 0 ? nodes.value[nodes.value.length-1].id : "0") + 1,
-                data: { label: node.name, typ: type, save: {} },
+                id: String(Number(nodes.value.length > 0 ? nodes.value[nodes.value.length-1].id : "0") + 1),
+                data: { label: node.name, typ: type, save: node.defaultSave || {} },
                 position: screenToFlowCoordinate({ x: centerX, y: centerY }),
                 type: node.variant,
             }
@@ -135,17 +106,79 @@ import { on } from "@primeuix/themes/aura/floatlabel";
             window.location.href = "/modules";
         }
     }
+
+    async function save() {
+        const nodesData = nodes.value.map(node => ({
+            id: node.id,
+            x: node.position.x,
+            y: node.position.y,
+            type: node.data.typ,
+            data: node.data.save
+        }));
+        const edgesData = edges.value.map(edge => ({
+            id: edge.id,
+            from: edge.source,
+            to: edge.target
+        }));
+        let req = await utils.apiPost(`/api/module/${moduleId.value}/save`, JSON.stringify({
+            nodes: nodesData,
+            edges: edgesData
+        }));
+        if (req.ok) {
+            unsaved.value = false;
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Changes saved successfully.' });
+        } else {
+            console.error("Failed to save changes:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: `Failed to save changes: ${req.error}` });
+        }
+    }
+    async function load() {
+        let req = await utils.apiGet(`/api/module/${moduleId.value}/load`);
+        if (!req.ok) {
+            console.error("Failed to load module:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: `Failed to load module: ${req.error}` });
+            return;
+        }
+        const data = req.body;
+        for (let i = 0; i < data.nodes.length; i++) {
+            const nde = data.nodes[i];
+            const preNode = DBLNodes[nde.type];
+            if (!preNode) {
+                console.error(`Node type ${nde.type} not found`);
+                continue;
+            }
+            baseNodes.value.push({
+                id: nde.id,
+                position: { x: nde.x, y: nde.y },
+                data: { label: preNode.name, typ: nde.type, save: nde.data },
+                type: preNode.variant
+            });
+        }
+        baseEdges.value = data.edges.map((edge: any) => ({
+            id: edge.id,
+            source: String(edge.from),
+            target: String(edge.to)
+        }));
+    }
+
     onMounted(async () => {
         if (!await utils.checkAuth()) {
             window.location.href = "/login";
         }
+        const splittedPath = window.location.pathname.split('/');
+        if (splittedPath.length < 3) {
+            window.location.href = "/modules";
+            return;
+        }
+        moduleId.value = Number(splittedPath[2]);
+        load()
     })
 </script>
 
 <template>
     <Toast />
     <ConfirmPopup></ConfirmPopup>
-    <EditorMenuBar editing="Example module" @exit="exit" />
+    <EditorMenuBar editing="Example module" @exit="exit" @save="save" />
     <EditorMenu @place="placeNode" />
     <Dialog v-model:visible="nodeEdit" modal :header="getNodeInfo(nodeEditId)?.data.label" class="w-full sm:w-96">
         <div class="flex flex-col gap-2">

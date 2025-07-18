@@ -7,6 +7,7 @@ interface DBLNode {
     name: string;
     description: string;
     category: DBLNodeCategory;
+    defaultSave?: any;
     variant: string;
     editor: string
 }
@@ -16,6 +17,11 @@ const DBLNodes: { [key: string]: DBLNode } = {
         name: "On command",
         description: "Triggers when a command is executed.",
         category: DBLNodeCategory.Event,
+        defaultSave: {
+            command: "",
+            desc: "A command",
+            variable: "command"
+        },
         variant: "input",
         editor: "command"
     },
@@ -23,6 +29,10 @@ const DBLNodes: { [key: string]: DBLNode } = {
         name: "Send message",
         description: "Sends a message to a channel.",
         category: DBLNodeCategory.Action,
+        defaultSave: {
+            content: "Hello, world!",
+            channel: "{channel}"
+        },
         variant: "default",
         editor: "message"
     }

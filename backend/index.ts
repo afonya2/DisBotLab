@@ -58,6 +58,17 @@ function dbSelect(command: string, ...args: any[]): Promise<any[]> {
     })
 }
 
+function asyncDb(command: string, ...args: any[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+        db.run(command, ...args, (err: any) => {
+            if (err) {
+                reject(err)
+            }
+            resolve()
+        })
+    })
+}
+
 let userIdCache: { [key: string]: { id: string, expires: number } } = {}
 async function getUserIdFromToken(token: string): Promise<string> {
     if (userIdCache[token] && userIdCache[token].expires > Date.now()) {
@@ -264,7 +275,7 @@ app.delete('/user', async (req: Request, res: Response) => {
         res.end(sendResponse(false, {}, 'User not found'))
         return
     }
-    db.run('DELETE FROM users WHERE id = ?', req.body.id)
+    await asyncDb('DELETE FROM users WHERE id = ?', req.body.id)
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(sendResponse(true, {
         id: req.body.id
@@ -296,7 +307,7 @@ app.post('/user', async (req: Request, res: Response) => {
         res.end(sendResponse(false, {}, 'User already exists'))
         return
     }
-    db.run('INSERT INTO users(id) VALUES(?)', req.body.id)
+    await asyncDb('INSERT INTO users(id) VALUES(?)', req.body.id)
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(sendResponse(true, {
         id: req.body.id
@@ -506,7 +517,7 @@ app.post('/module', async (req: Request, res: Response) => {
         res.end(sendResponse(false, {}, 'Invalid module description'))
         return
     }
-    db.run('INSERT INTO modules(name, description, enabled) VALUES(?, ?, ?)', req.body.name, req.body.description, 1)
+    await asyncDb('INSERT INTO modules(name, description, enabled) VALUES(?, ?, ?)', req.body.name, req.body.description, 1)
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(sendResponse(true, {
         name: req.body.name,
@@ -555,7 +566,7 @@ app.patch('/module/:id', async (req: Request, res: Response) => {
         res.end(sendResponse(false, {}, 'Module not found'))
         return
     }
-    db.run('UPDATE modules SET name = ?, description = ?, enabled = ? WHERE id = ?', req.body.name, req.body.description, req.body.enabled, req.params.id)
+    await asyncDb('UPDATE modules SET name = ?, description = ?, enabled = ? WHERE id = ?', req.body.name, req.body.description, req.body.enabled, req.params.id)
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(sendResponse(true, {
         id: req.params.id,
@@ -590,7 +601,7 @@ app.delete('/module/:id', async (req: Request, res: Response) => {
         res.end(sendResponse(false, {}, 'Module not found'))
         return
     }
-    db.run('DELETE FROM modules WHERE id = ?', req.params.id)
+    await asyncDb('DELETE FROM modules WHERE id = ?', req.params.id)
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(sendResponse(true, {
         id: req.params.id,
@@ -598,6 +609,98 @@ app.delete('/module/:id', async (req: Request, res: Response) => {
         description: moduleExists[0].description,
         enabled: moduleExists[0].enabled
     }))
+})
+
+app.post('/module/:id/save', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    if (req.params.id == undefined || typeof req.params.id !== 'string' || req.params.id.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module ID'))
+        return
+    }
+    if (req.body.nodes == undefined || !Array.isArray(req.body.nodes)) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid nodes'))
+        return
+    }
+    if (req.body.edges == undefined || !Array.isArray(req.body.edges)) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid edges'))
+        return
+    }
+    let moduleExists = await dbSelect('SELECT * FROM modules WHERE id = ?', req.params.id)
+    if (moduleExists.length == 0) {
+        res.writeHead(404, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Module not found'))
+        return
+    }
+    await asyncDb('DELETE FROM nodes WHERE module = ?', req.params.id)
+    await asyncDb('DELETE FROM edges WHERE module = ?', req.params.id)
+    for (let i = 0; i < req.body.nodes.length; i++) {
+        const node = req.body.nodes[i];
+        await asyncDb('INSERT INTO nodes (module, id, type, x, y, data) VALUES (?, ?, ?, ?, ?, ?)', req.params.id, node.id, node.type, node.x, node.y, JSON.stringify(node.data))
+    }
+    for (let i = 0; i < req.body.edges.length; i++) {
+        const edge = req.body.edges[i];
+        await asyncDb('INSERT INTO edges (module, id, "from", "to") VALUES (?, ?, ?, ?)', req.params.id, edge.id, edge.from, edge.to)
+    }
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, {}))
+})
+
+app.get('/module/:id/load', async (req: Request, res: Response) => {
+    if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid token'))
+        return
+    }
+    let userId = await getUserIdFromToken(req.headers.authorization)
+    let trusted = await dbSelect('SELECT * FROM users WHERE id = ?', userId)
+    if (trusted.length == 0) {
+        res.writeHead(403, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'User not trusted'))
+        return
+    }
+
+    if (req.params.id == undefined || typeof req.params.id !== 'string' || req.params.id.length === 0) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Invalid module ID'))
+        return
+    }
+    let moduleExists = await dbSelect('SELECT * FROM modules WHERE id = ?', req.params.id)
+    if (moduleExists.length == 0) {
+        res.writeHead(404, { 'content-type': 'application/json' })
+        res.end(sendResponse(false, {}, 'Module not found'))
+        return
+    }
+    let nodes = await dbSelect('SELECT * FROM nodes WHERE module = ?', req.params.id)
+    nodes = nodes.map((node) => ({
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        type: node.type,
+        data: JSON.parse(node.data || '{}')
+    }))
+    let edges = await dbSelect('SELECT * FROM edges WHERE module = ?', req.params.id)
+    edges = edges.map((edge) => ({
+        id: edge.id,
+        from: edge.from,
+        to: edge.to
+    }))
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(sendResponse(true, { nodes, edges }))
 })
 
 client.once('ready', () => {

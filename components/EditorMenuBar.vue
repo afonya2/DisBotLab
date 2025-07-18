@@ -12,7 +12,7 @@
 <template>
     <Menubar :model="menuItems" style="height: 50px;" class="w-screen">
         <template #start>
-            <h1 class="text-xl">DisBotLab Editor</h1>
+            <h1 class="text-xl font-semibold">DisBotLab Editor</h1>
             <h2 class="text-lg ml-4">Editing: {{ props.editing }}</h2>
         </template>
         <template #end>
