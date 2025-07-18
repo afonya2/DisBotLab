@@ -25,6 +25,18 @@ const DBLNodes: { [key: string]: DBLNode } = {
         variant: "input",
         editor: "command"
     },
+    "reply": {
+        name: "Reply to interaction",
+        description: "Replies to a command interaction.",
+        category: DBLNodeCategory.Action,
+        defaultSave: {
+            content: "",
+            interaction: "interaction",
+            ephemeral: true
+        },
+        variant: "default",
+        editor: "reply"
+    },
     "sendMessage": {
         name: "Send message",
         description: "Sends a message to a channel.",

@@ -196,6 +196,7 @@
             <p class="text-xl">{{ DBLNodes[getNodeInfo(nodeEditId)?.data.typ].description }}</p>
             <EditorMessageEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'message'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <EditorCommandEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'command'" :node-data="getNodeInfo(nodeEditId)?.data" />
+            <EditorReplyEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'reply'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <div class="flex">
                 <Button class="ml-auto" severity="danger" @click="deleteNode()"><i class="pi pi-trash"></i>Delete</Button>
                 <Button class="ml-2" @click="nodeEdit = false"><i class="pi pi-save"></i>Save</Button>

@@ -624,7 +624,7 @@ export default function (app: Application, db: Database, config: any, client: Cl
             if (getVar("commands")[command.name] === undefined) {
                 changed = true
                 break
-            } else if (getVar("commands")[command.name].name !== command.name || getVar("commands")[command.name].description !== command.description) {
+            } else if (getVar("commands")[command.name].name !== command.name || getVar("commands")[command.name].description !== command.description || getVar("commands")[command.name].module !== command.module || getVar("commands")[command.name].nodeId !== command.nodeId) {
                 changed = true
                 break
             }
@@ -635,7 +635,7 @@ export default function (app: Application, db: Database, config: any, client: Cl
                 if (newCommands[command.name] === undefined) {
                     changed = true
                     break
-                } else if (newCommands[command.name].name !== command.name || newCommands[command.name].description !== command.description) {
+                } else if (newCommands[command.name].name !== command.name || newCommands[command.name].description !== command.description || getVar("commands")[command.name].module !== command.module || getVar("commands")[command.name].nodeId !== command.nodeId) {
                     changed = true
                     break
                 }

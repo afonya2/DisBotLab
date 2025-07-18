@@ -1,6 +1,6 @@
 import type { Database } from "sqlite3"
 import https from 'https'
-import { SlashCommandBuilder, type Client } from "discord.js"
+import { MessageFlagsBitField, SlashCommandBuilder, TextChannel, type Client } from "discord.js"
 
 function sendResponse(ok: boolean, data: any, error?: string) {
     let res: any = {
@@ -91,6 +91,8 @@ async function getUserIdFromToken(token: string): Promise<string> {
 interface Command {
     name: string;
     description: string;
+    module: string;
+    nodeId: string;
 }
 
 async function getCommands(db: Database): Promise<{ [key: string]: Command }> {
@@ -109,7 +111,9 @@ async function getCommands(db: Database): Promise<{ [key: string]: Command }> {
         if (node.type == "command" && enabledModules.includes(node.module)) {
             commands[nodeData.command] = {
                 name: nodeData.command,
-                description: nodeData.desc
+                description: nodeData.desc,
+                module: node.module,
+                nodeId: node.id
             }
         }
     }
@@ -129,6 +133,106 @@ async function reloadCommands(client: Client, commands: { [key: string]: Command
     console.log("Commands reloaded!");
 }
 
+function completeVariables(input: string, variables: { [key: string]: any }): string {
+    let completions: { [key: string]: any } = {};
+    function recAddCompletions(vars: { [key: string]: any }, prefix: string) {
+        for (let key in vars) {
+            if (typeof vars[key] === 'object') {
+                recAddCompletions(vars[key], prefix + key + '.');
+            } else if (typeof vars[key] === 'function') {
+                continue
+            } else {
+                completions[prefix + key] = vars[key];
+            }
+        }
+    }
+    recAddCompletions(variables, '');
+    for (let c in completions) {
+        const value = completions[c];
+        input = input.replace(new RegExp(`\\{${c}\\}`, 'g'), value);
+    }
+    return input;
+}
+
+interface FlowNode {
+    module: number;
+    id: number;
+    type: string;
+    data: any;
+}
+
+class Flow {
+    module: number;
+    startId: number;
+    public flow: FlowNode[] = [];
+    public flowVariables: { [key: string]: any } = {};
+    public privateVariables: { [key: string]: any } = {};
+
+    constructor(module: number, startId: number) {
+        this.module = module;
+        this.startId = startId;
+    }
+
+    async load(db: Database) {
+        let module = await dbSelect(db, 'SELECT * FROM modules WHERE id = ?', this.module);
+        if (module.length === 0) {
+            console.error(`Module with ID ${this.module} not found`);
+            return;
+        }
+        if (module[0].enabled === 0) {
+            return;
+        }
+        let nodes = await dbSelect(db, 'SELECT * FROM nodes WHERE module = ?', this.module);
+        let edges = await dbSelect(db, 'SELECT * FROM edges WHERE module = ?', this.module);
+        let currentNode = nodes.find(n => n.id === this.startId);
+        while (true) {
+            this.flow.push({
+                module: currentNode.module,
+                id: currentNode.id,
+                type: currentNode.type,
+                data: JSON.parse(currentNode.data)
+            });
+            let nextEdge = edges.find(e => e.from === currentNode.id);
+            if (!nextEdge) break;
+            currentNode = nodes.find(n => n.id === nextEdge.to);
+        }
+    }
+
+    async run(client: Client, beginEvent: any = {}, beginPrivate: any = {}) {
+        for (let i = 0; i < this.flow.length; i++) {
+            const node = this.flow[i];
+            if (node.type == "command") {
+                this.flowVariables[node.data.variable] = beginEvent
+                this.privateVariables[node.data.variable] = beginPrivate
+            } else if (node.type == "sendMessage") {
+                let channel = completeVariables(node.data.channel, this.flowVariables);
+                let content = completeVariables(node.data.content, this.flowVariables);
+                let channelObj = await client.channels.fetch(channel);
+                if (channelObj instanceof TextChannel) {
+                    await channelObj.send({
+                        content: content
+                    });
+                }
+            } else if (node.type == "reply") {
+                let content = completeVariables(node.data.content, this.flowVariables);
+                let interaction = this.privateVariables[node.data.interaction]
+                if (interaction && interaction.isRepliable()) {
+                    if (node.data.ephemeral) {
+                        await interaction.reply({
+                            content: content,
+                            flags: MessageFlagsBitField.Flags.Ephemeral
+                        });
+                    } else {
+                        await interaction.reply({
+                            content: content
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
+
 export default {
     sendResponse,
     request,
@@ -136,9 +240,10 @@ export default {
     asyncDb,
     getUserIdFromToken,
     getCommands,
-    reloadCommands
+    reloadCommands,
+    Flow
 }
 
-export { sendResponse, request, dbSelect, asyncDb, getUserIdFromToken, getCommands, reloadCommands }
+export { sendResponse, request, dbSelect, asyncDb, getUserIdFromToken, getCommands, reloadCommands, Flow }
 
-export type { Command }
+export type { Command, FlowNode }
