@@ -80,6 +80,15 @@
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to restart bot: ' + req.error });
         }
     }
+    async function reloadCommands() {
+        let req = await utils.apiPost('/api/reloadCommands', JSON.stringify({}));
+        if (req.ok) {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Commands reloaded successfully.' });
+        } else {
+            console.error("Failed to reload commands:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to reload commands: ' + req.error });
+        }
+    }
     onMounted(async () => {
         if (!await utils.checkAuth()) {
             window.location.href = "/login";
@@ -130,6 +139,7 @@
                 <div class="flex items-center gap-2">
                     <Button class="w-fit" severity="danger" @click="restart()"><i class="pi pi-refresh"></i>Restart</Button>
                     <Button class="w-fit" severity="warn" @click="reloadConfig()"><i class="pi pi-refresh"></i>Reload config</Button>
+                    <Button class="w-fit" severity="warn" @click="reloadCommands()"><i class="pi pi-refresh"></i>Reload commands</Button>
                 </div>
             </ContentCard>
 

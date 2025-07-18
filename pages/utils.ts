@@ -98,10 +98,25 @@ async function apiPost(url: string, data: string, method = "POST", headers = {})
     return { ok: true, body: res.body };
 }
 
+function copy(obj: any, deep = false): any {
+    let out: any = Array.isArray(obj) ? [] : {};
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            if (deep && typeof obj[key] === 'object' && obj[key] !== null) {
+                out[key] = copy(obj[key], true);
+            } else {
+                out[key] = obj[key];
+            }
+        }
+    }
+    return out;
+}
+
 export default {
     generateRandomString,
     getToken,
     checkAuth,
     apiGet,
-    apiPost
+    apiPost,
+    copy
 }

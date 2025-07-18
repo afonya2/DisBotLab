@@ -46,7 +46,7 @@
         addNodes([
             {
                 id: String(Number(nodes.value.length > 0 ? nodes.value[nodes.value.length-1].id : "0") + 1),
-                data: { label: node.name, typ: type, save: node.defaultSave || {} },
+                data: { label: node.name, typ: type, save: utils.copy(node.defaultSave, true) || {} },
                 position: screenToFlowCoordinate({ x: centerX, y: centerY }),
                 type: node.variant,
             }

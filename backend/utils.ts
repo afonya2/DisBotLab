@@ -1,5 +1,6 @@
 import type { Database } from "sqlite3"
 import https from 'https'
+import { SlashCommandBuilder, type Client } from "discord.js"
 
 function sendResponse(ok: boolean, data: any, error?: string) {
     let res: any = {
@@ -87,12 +88,57 @@ async function getUserIdFromToken(token: string): Promise<string> {
     }
 }
 
+interface Command {
+    name: string;
+    description: string;
+}
+
+async function getCommands(db: Database): Promise<{ [key: string]: Command }> {
+    let modules = await dbSelect(db, "SELECT * FROM modules")
+    let enabledModules = modules.map(m => {
+        if (m.enabled) {
+            return m.id
+        }
+        return null
+    }).filter(m => m !== null)
+    let nodes = await dbSelect(db, "SELECT * FROM nodes")
+    let commands: { [key: string]: Command } = {}
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]
+        const nodeData = JSON.parse(node.data)
+        if (node.type == "command" && enabledModules.includes(node.module)) {
+            commands[nodeData.command] = {
+                name: nodeData.command,
+                description: nodeData.desc
+            }
+        }
+    }
+    return commands
+}
+
+async function reloadCommands(client: Client, commands: { [key: string]: Command }) {
+    let commandBuilders = []
+    for (let commandName in commands) {
+        const command = commands[commandName];
+        commandBuilders.push(new SlashCommandBuilder()
+            .setName(command.name)
+            .setDescription(command.description)
+        );
+    }
+    client.application?.commands.set(commandBuilders)
+    console.log("Commands reloaded!");
+}
+
 export default {
     sendResponse,
     request,
     dbSelect,
     asyncDb,
-    getUserIdFromToken
+    getUserIdFromToken,
+    getCommands,
+    reloadCommands
 }
 
-export { sendResponse, request, dbSelect, asyncDb, getUserIdFromToken }
+export { sendResponse, request, dbSelect, asyncDb, getUserIdFromToken, getCommands, reloadCommands }
+
+export type { Command }

@@ -1,10 +1,10 @@
 import express, { type Application, type Request, type Response } from "express"
-import { sendResponse, request, getUserIdFromToken, dbSelect, asyncDb } from "./utils"
+import { sendResponse, request, getUserIdFromToken, dbSelect, asyncDb, getCommands, type Command, reloadCommands } from "./utils"
 import type { Database } from "sqlite3"
 import type { Client } from "discord.js"
 import fs from "fs"
 
-export default function (app: Application, db: Database, config: any, client: Client) {
+export default function (app: Application, db: Database, config: any, client: Client, getVar: (name: string) => any, setVar: (name: string, value: any) => void) {
     app.get('/info', (req: Request, res: Response) => {
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {
@@ -381,6 +381,26 @@ export default function (app: Application, db: Database, config: any, client: Cl
         }, 1000)
     })
 
+    app.post('/reloadCommands', async (req: Request, res: Response) => {
+        if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid token'))
+            return
+        }
+        let userId = await getUserIdFromToken(req.headers.authorization)
+        let trusted = await dbSelect(db, 'SELECT * FROM users WHERE id = ?', userId)
+        if (trusted.length == 0) {
+            res.writeHead(403, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'User not trusted'))
+            return
+        }
+
+        setVar("commands", await getCommands(db))
+        await reloadCommands(client, getVar("commands"))
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(sendResponse(true, {}))
+    })
+
     app.get('/modules', async (req: Request, res: Response) => {
         if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
             res.writeHead(400, { 'content-type': 'application/json' })
@@ -596,6 +616,37 @@ export default function (app: Application, db: Database, config: any, client: Cl
         for (let i = 0; i < req.body.edges.length; i++) {
             const edge = req.body.edges[i];
             await asyncDb(db, 'INSERT INTO edges (module, id, "from", "to") VALUES (?, ?, ?, ?)', req.params.id, edge.id, edge.from, edge.to)
+        }
+        let newCommands = await getCommands(db)
+        let changed = false
+        for (let i in newCommands) {
+            const command = newCommands[i];
+            if (getVar("commands")[command.name] === undefined) {
+                changed = true
+                break
+            } else if (getVar("commands")[command.name].name !== command.name || getVar("commands")[command.name].description !== command.description) {
+                changed = true
+                break
+            }
+        }
+        if (!changed) {
+            for (let i in getVar("commands")) {
+                const command = getVar("commands")[i];
+                if (newCommands[command.name] === undefined) {
+                    changed = true
+                    break
+                } else if (newCommands[command.name].name !== command.name || newCommands[command.name].description !== command.description) {
+                    changed = true
+                    break
+                }
+            }
+        }
+        if (changed) {
+            setVar("commands", newCommands)
+            console.warn("Commands have been changed, reloading commands...")
+            setTimeout(() => {
+                reloadCommands(client, getVar("commands"))
+            }, 5000)
         }
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {}))
