@@ -19,6 +19,7 @@
     const confirm = useConfirm();
     const toast = useToast();
     const moduleId = ref(0);
+    const moduleName = ref("Loading...");
 
     function onConnect(params: Connection) {
         let alreadyExists = edges.value.findIndex(edge => edge.target === params.target);
@@ -133,6 +134,16 @@
         }
     }
     async function load() {
+        let modReq = await utils.apiGet(`/api/module/${moduleId.value}`);
+        if (!modReq.ok) {
+            console.error("Failed to load module:", modReq.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: `Failed to load module: ${modReq.error}` });
+            return;
+        }
+        moduleName.value = modReq.body.name;
+        useHead({
+            title: `Editing ${moduleName.value} - DisBotLab Editor`
+        });
         let req = await utils.apiGet(`/api/module/${moduleId.value}/load`);
         if (!req.ok) {
             console.error("Failed to load module:", req.error);
