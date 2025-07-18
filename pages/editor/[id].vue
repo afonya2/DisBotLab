@@ -189,7 +189,7 @@
 <template>
     <Toast />
     <ConfirmPopup></ConfirmPopup>
-    <EditorMenuBar editing="Example module" @exit="exit" @save="save" />
+    <EditorMenuBar :editing="moduleName" @exit="exit" @save="save" />
     <EditorMenu @place="placeNode" />
     <Dialog v-model:visible="nodeEdit" modal :header="getNodeInfo(nodeEditId)?.data.label" class="w-full sm:w-96">
         <div class="flex flex-col gap-2">
