@@ -1,6 +1,6 @@
 import type { Database } from "sqlite3"
 import https from 'https'
-import { MessageFlagsBitField, SlashCommandBuilder, TextChannel, type Client } from "discord.js"
+import { Message, MessageFlagsBitField, SlashCommandBuilder, TextChannel, type Client } from "discord.js"
 
 function sendResponse(ok: boolean, data: any, error?: string) {
     let res: any = {
@@ -178,8 +178,8 @@ class Flow {
         this.database = db;
     }
 
-    async load(db: Database) {
-        let module = await dbSelect(db, 'SELECT * FROM modules WHERE id = ?', this.module);
+    async load() {
+        let module = await dbSelect(this.database, 'SELECT * FROM modules WHERE id = ?', this.module);
         if (module.length === 0) {
             console.error(`Module with ID ${this.module} not found`);
             return;
@@ -187,8 +187,8 @@ class Flow {
         if (module[0].enabled === 0) {
             return;
         }
-        let nodes = await dbSelect(db, 'SELECT * FROM nodes WHERE module = ?', this.module);
-        let edges = await dbSelect(db, 'SELECT * FROM edges WHERE module = ?', this.module);
+        let nodes = await dbSelect(this.database, 'SELECT * FROM nodes WHERE module = ?', this.module);
+        let edges = await dbSelect(this.database, 'SELECT * FROM edges WHERE module = ?', this.module);
         let currentNode = nodes.find(n => n.id === this.startId);
         while (true) {
             this.flow.push({
@@ -253,6 +253,120 @@ class Flow {
             } else if (node.type == "error") {
                 let errorMessage = completeVariables(node.data.message, this.flowVariables, globalVariables);
                 throw new Error(errorMessage);
+            } else if (node.type == "if") {
+                let left = completeVariables(node.data.left, this.flowVariables, globalVariables);
+                let right = completeVariables(node.data.right, this.flowVariables, globalVariables);
+                let condition: boolean;
+                switch (node.data.operator) {
+                    case "==":
+                        condition = left == right;
+                        break;
+                    case "!=":
+                        condition = left != right;
+                        break;
+                    case ">":
+                        condition = left > right;
+                        break;
+                    case "<":
+                        condition = left < right;
+                        break;
+                    case ">=":
+                        condition = left >= right;
+                        break;
+                    case "<=":
+                        condition = left <= right;
+                        break;
+                    default:
+                        throw new Error("Unknown condition: " + node.data.condition);
+                }
+                if (condition) {
+                    let depth = 1;
+                    let preV = i
+                    while (i + 1 < this.flow.length) {
+                        i++;
+                        const nextNode = this.flow[i];
+                        if (nextNode.type == "if") {
+                            depth++;
+                        } else if (nextNode.type == "while") {
+                            depth++;
+                        } else if (nextNode.type == "end") {
+                            depth--;
+                            if (depth == 0) {
+                                break;
+                            }
+                        }
+                    }
+                    if (depth > 0) {
+                        throw new Error("Unmatched if/while in flow");
+                    }
+                    i = preV;
+                } else {
+                    let depth = 1;
+                    while (i + 1 < this.flow.length) {
+                        i++;
+                        const nextNode = this.flow[i];
+                        if (nextNode.type == "if") {
+                            depth++;
+                        } else if (nextNode.type == "while") {
+                            depth++;
+                        } else if (nextNode.type == "end") {
+                            depth--;
+                            if (depth == 0) {
+                                break;
+                            }
+                        }
+                    }
+                    if (depth > 0) {
+                        throw new Error("Unmatched if/while in flow");
+                    }
+                }
+            } else if (node.type == "sendMessageUser") {
+                let userId = completeVariables(node.data.user, this.flowVariables, globalVariables);
+                let content = completeVariables(node.data.content, this.flowVariables, globalVariables);
+                let user = await client.users.fetch(userId);
+                user.send({
+                    content: content
+                })
+            } else if (node.type == "onMessage") {
+                this.flowVariables[node.data.variable] = beginEvent
+                this.privateVariables[node.data.variable] = beginPrivate
+            } else if (node.type == "replyMessage") {
+                let content = completeVariables(node.data.content, this.flowVariables, globalVariables);
+                let message = this.privateVariables[node.data.message];
+                if (message && message instanceof Message) {
+                    await message.reply({
+                        content: content
+                    });
+                }
+            } else if (node.type == "math") {
+                let left = Number(completeVariables(node.data.left, this.flowVariables, globalVariables));
+                let right = Number(completeVariables(node.data.right, this.flowVariables, globalVariables));
+                if (Number.isNaN(left) || Number.isNaN(right)) {
+                    throw new Error("Left or right operand is not a number!");
+                }
+                let result: number;
+                switch (node.data.operator) {
+                    case "+":
+                        result = left + right;
+                        break;
+                    case "-":
+                        result = left - right;
+                        break;
+                    case "*":
+                        result = left * right;
+                        break;
+                    case "/":
+                        result = left / right;
+                        break;
+                    case "%":
+                        result = left % right;
+                        break;
+                    default:
+                        throw new Error("Unknown operator: " + node.data.operator);
+                }
+                this.flowVariables[node.data.variable] = result;
+            } else if (node.type == "stop") {
+                return
             }
         }
     }

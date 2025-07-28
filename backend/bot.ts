@@ -13,7 +13,7 @@ export default function (db: Database, config: any, client: Client, getVar: (nam
         }
         let command = commands[interaction.commandName];
         let flow = new Flow(db, command.module, command.nodeId);
-        await flow.load(db)
+        await flow.load()
         try {
             await flow.run(client, {
                 channel: interaction.channelId,
@@ -27,6 +27,35 @@ export default function (db: Database, config: any, client: Client, getVar: (nam
                 await interaction.reply({ content: "An error occurred while executing the command.", flags: MessageFlagsBitField.Flags.Ephemeral });
             }
             await utils.asyncDb(db, "INSERT INTO interactions (id, date, success, userId, error) VALUES (?, ?, ?, ?, ?)", interaction.id, new Date(), false, interaction.user.id, e.message);
+        }
+    });
+    client.on('messageCreate', async (message) => {
+        let modules = await utils.dbSelect(db, "SELECT * FROM modules")
+        let enabledModules = modules.map(m => {
+            if (m.enabled) {
+                return m.id
+            }
+            return null
+        }).filter(m => m !== null)
+        let nodes = await utils.dbSelect(db, "SELECT * FROM nodes")
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            const nodeData = JSON.parse(node.data)
+            if (node.type == "onMessage" && enabledModules.includes(node.module) && message.content.startsWith(nodeData.prefix)) {
+                let flow = new Flow(db, node.module, node.id);
+                await flow.load();
+                try {
+                    await flow.run(client, {
+                        channel: message.channelId,
+                        user: message.author.id,
+                        guild: message.guildId,
+                        content: message.content,
+                        isBot: message.author.bot
+                    }, message);
+                } catch (e: any) {
+                    console.error("Error running flow:", e);
+                }
+            }
         }
     });
 }

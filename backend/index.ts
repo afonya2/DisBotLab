@@ -1,7 +1,7 @@
 import express from 'express'
 import fs from 'fs'
 import sqlite from 'sqlite3'
-import { Client } from 'discord.js'
+import { Client, GatewayIntentBits } from 'discord.js'
 import api from './api'
 import bot from './bot'
 import type { Command } from './utils'
@@ -10,7 +10,7 @@ import utils from './utils'
 const app = express()
 let config = JSON.parse(fs.readFileSync('../config.json', 'utf-8'))
 const db = new sqlite.Database('./database.db')
-const client = new Client({ intents: [] })
+const client = new Client({ intents: [GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages, GatewayIntentBits.Guilds] })
 let commands: { [key: string]: Command } = {}
 
 app.use(express.json())

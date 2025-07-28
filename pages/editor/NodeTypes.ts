@@ -2,6 +2,7 @@ enum DBLNodeCategory {
     Event = 'Event',
     Action = 'Action',
     Variables = 'Variables',
+    Control = 'Control',
     Other = 'Other'
 }
 
@@ -39,6 +40,17 @@ const DBLNodes: { [key: string]: DBLNode } = {
         variant: "default",
         editor: "reply"
     },
+    "replyMessage": {
+        name: "Reply to message",
+        description: "Replies to message.",
+        category: DBLNodeCategory.Action,
+        defaultSave: {
+            content: "",
+            message: "message"
+        },
+        variant: "default",
+        editor: "reply"
+    },
     "sendMessage": {
         name: "Send message",
         description: "Sends a message to a channel.",
@@ -46,6 +58,17 @@ const DBLNodes: { [key: string]: DBLNode } = {
         defaultSave: {
             content: "Hello, world!",
             channel: "{channel}"
+        },
+        variant: "default",
+        editor: "message"
+    },
+    "sendMessageUser": {
+        name: "Send message to user",
+        description: "Sends a message to a user.",
+        category: DBLNodeCategory.Action,
+        defaultSave: {
+            content: "Hello, world!",
+            user: "{user}"
         },
         variant: "default",
         editor: "message"
@@ -61,6 +84,46 @@ const DBLNodes: { [key: string]: DBLNode } = {
         },
         variant: "default",
         editor: "variable"
+    },
+    "if": {
+        name: "If condition",
+        description: "Executes nodes based on a condition.",
+        category: DBLNodeCategory.Control,
+        defaultSave: {
+            left: "0",
+            right: "0",
+            operator: "=="
+        },
+        variant: "default",
+        editor: "if"
+    },
+    "while": {
+        name: "While loop",
+        description: "Repeats nodes while a condition is true.",
+        category: DBLNodeCategory.Control,
+        defaultSave: {
+            left: "0",
+            right: "0",
+            operator: "=="
+        },
+        variant: "default",
+        editor: "if"
+    },
+    "end": {
+        name: "End",
+        description: "Ends an if condition or a while loop.",
+        category: DBLNodeCategory.Control,
+        defaultSave: {},
+        variant: "default",
+        editor: ""
+    },
+    "stop": {
+        name: "Stop flow",
+        description: "Stops the current flow execution.",
+        category: DBLNodeCategory.Control,
+        defaultSave: {},
+        variant: "default",
+        editor: ""
     },
     "comment": {
         name: "Comment",
@@ -79,8 +142,42 @@ const DBLNodes: { [key: string]: DBLNode } = {
         defaultSave: {
             message: "An error occurred"
         },
-        variant: "output",
+        variant: "default",
         editor: "error"
+    },
+    "onError": {
+        name: "On error",
+        description: "Triggers when an error occurs in the flow.",
+        category: DBLNodeCategory.Event,
+        defaultSave: {
+            variable: "error"
+        },
+        variant: "input",
+        editor: "simpleEvent"
+    },
+    "onMessage": {
+        name: "On message",
+        description: "Triggers when a message is sent in a channel.",
+        category: DBLNodeCategory.Event,
+        defaultSave: {
+            prefix: "",
+            variable: "message"
+        },
+        variant: "input",
+        editor: "simpleEvent"
+    },
+    "math": {
+        name: "Math operation",
+        description: "Performs a mathematical operation.",
+        category: DBLNodeCategory.Variables,
+        defaultSave: {
+            operator: "+",
+            left: "1",
+            right: "1",
+            variable: "result"
+        },
+        variant: "default",
+        editor: "math"
     }
 }
 
@@ -88,6 +185,7 @@ const CategoryIcons = {
     "Event": 'pi pi-android',
     "Action": 'pi pi-play',
     "Variables": 'pi pi-th-large',
+    "Control": 'pi pi-cog',
     "Other": 'pi pi-ellipsis-h'
 }
 
