@@ -253,7 +253,7 @@ class Flow {
             } else if (node.type == "error") {
                 let errorMessage = completeVariables(node.data.message, this.flowVariables, globalVariables);
                 throw new Error(errorMessage);
-            } else if (node.type == "if") {
+            } else if (node.type == "if" || node.type == "while") {
                 let left = completeVariables(node.data.left, this.flowVariables, globalVariables);
                 let right = completeVariables(node.data.right, this.flowVariables, globalVariables);
                 let condition: boolean;
@@ -265,16 +265,16 @@ class Flow {
                         condition = left != right;
                         break;
                     case ">":
-                        condition = left > right;
+                        condition = Number(left) > Number(right);
                         break;
                     case "<":
-                        condition = left < right;
+                        condition = Number(left) < Number(right);
                         break;
                     case ">=":
-                        condition = left >= right;
+                        condition = Number(left) >= Number(right);
                         break;
                     case "<=":
-                        condition = left <= right;
+                        condition = Number(left) <= Number(right);
                         break;
                     default:
                         throw new Error("Unknown condition: " + node.data.condition);
@@ -367,6 +367,39 @@ class Flow {
                 this.flowVariables[node.data.variable] = result;
             } else if (node.type == "stop") {
                 return
+            } else if (node.type == "end") {
+                let depth = 1;
+                let preV = i
+                let jumpback = -1
+                while (i - 1 >= 0) {
+                    i--;
+                    const nextNode = this.flow[i];
+                    if (nextNode.type == "if") {
+                        depth--;
+                        if (depth == 0) {
+                            break;
+                        }
+                    } else if (nextNode.type == "while") {
+                        depth--;
+                        if (depth == 0) {
+                            jumpback = i;
+                            break;
+                        }
+                    } else if (nextNode.type == "end") {
+                        depth++;
+                    }
+                }
+                if (depth > 0) {
+                    throw new Error("Unmatched end in flow");
+                }
+                if (jumpback >= 0) {
+                    i = jumpback-1;
+                } else {
+                    i = preV;
+                }
+            } else if (node.type == "log") {
+                let message = completeVariables(node.data.message, this.flowVariables, globalVariables);
+                console.log(message);
             }
         }
     }

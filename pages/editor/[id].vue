@@ -13,6 +13,7 @@
     import EditorIfEdit from "~/components/EditorIfEdit.vue";
     import EditorSimpleEventEdit from "~/components/EditorSimpleEventEdit.vue";
     import EditorMathEdit from "~/components/EditorMathEdit.vue";
+    import EditorLogEdit from "~/components/EditorLogEdit.vue";
     import { DBLNodes, CategoryIcons } from "./NodeTypes";
     import { Dialog, Button, ConfirmPopup, Toast, useConfirm, useToast } from "primevue";
 
@@ -209,6 +210,7 @@
             <EditorIfEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'if'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <EditorSimpleEventEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'simpleEvent'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <EditorMathEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'math'" :node-data="getNodeInfo(nodeEditId)?.data" />
+            <EditorLogEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'log'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <div class="flex">
                 <Button class="ml-auto" severity="danger" @click="deleteNode()"><i class="pi pi-trash"></i>Delete</Button>
                 <Button class="ml-2" @click="nodeEdit = false"><i class="pi pi-save"></i>Save</Button>

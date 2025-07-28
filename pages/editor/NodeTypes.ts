@@ -178,6 +178,16 @@ const DBLNodes: { [key: string]: DBLNode } = {
         },
         variant: "default",
         editor: "math"
+    },
+    "log": {
+        name: "Log to console",
+        description: "Logs a message to the console.",
+        category: DBLNodeCategory.Other,
+        defaultSave: {
+            message: "Hello, world!"
+        },
+        variant: "default",
+        editor: "log"
     }
 }
 
