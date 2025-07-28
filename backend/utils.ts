@@ -400,6 +400,9 @@ class Flow {
             } else if (node.type == "log") {
                 let message = completeVariables(node.data.message, this.flowVariables, globalVariables);
                 console.log(message);
+            } else if (node.type == "onError") {
+                this.flowVariables[node.data.variable] = beginEvent
+                this.privateVariables[node.data.variable] = beginPrivate
             }
         }
     }

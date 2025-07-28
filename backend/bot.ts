@@ -2,6 +2,30 @@ import type { Database } from "sqlite3";
 import utils, { Flow, type Command } from "./utils";
 import { MessageFlagsBitField, type Client } from "discord.js";
 
+async function executeOnError(db: Database, client: Client, module: string, error: any) {
+    let mod = await utils.dbSelect(db, "SELECT * FROM modules WHERE id = ?", module);
+    if (mod.length === 0) {
+        return;
+    }
+    if (!mod[0].enabled) {
+        return;
+    }
+    let nodes = await utils.dbSelect(db, "SELECT * FROM nodes WHERE module = ? AND type = 'onError'", module);
+    if (nodes.length > 0) {
+        let flow = new Flow(db, Number(module), nodes[0].id);
+        await flow.load();
+        try {
+            await flow.run(client, {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            }, error);
+        } catch (e: any) {
+            console.error("Error running onError flow:", e);
+        }
+    }
+}
+
 export default function (db: Database, config: any, client: Client, getVar: (name: string) => any, setVar: (name: string, value: any) => void) {
     client.on('interactionCreate', async (interaction) => {
         if (!interaction.isChatInputCommand()) return;
@@ -27,6 +51,7 @@ export default function (db: Database, config: any, client: Client, getVar: (nam
                 await interaction.reply({ content: "An error occurred while executing the command.", flags: MessageFlagsBitField.Flags.Ephemeral });
             }
             await utils.asyncDb(db, "INSERT INTO interactions (id, date, success, userId, error) VALUES (?, ?, ?, ?, ?)", interaction.id, new Date(), false, interaction.user.id, e.message);
+            await executeOnError(db, client, command.module, e);
         }
     });
     client.on('messageCreate', async (message) => {
@@ -54,6 +79,7 @@ export default function (db: Database, config: any, client: Client, getVar: (nam
                     }, message);
                 } catch (e: any) {
                     console.error("Error running flow:", e);
+                    await executeOnError(db, client, node.module, e);
                 }
             }
         }
