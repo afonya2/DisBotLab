@@ -7,6 +7,9 @@
     import { MiniMap } from "@vue-flow/minimap";
     import EditorMenuBar from "~/components/EditorMenuBar.vue";
     import EditorMenu from "~/components/EditorMenu.vue";
+    import EditorVariableEdit from "~/components/EditorVariableEdit.vue";
+    import EditorCommentEdit from "~/components/EditorCommentEdit.vue";
+    import EditorErrorEdit from "~/components/EditorErrorEdit.vue";
     import { DBLNodes, CategoryIcons } from "./NodeTypes";
     import { Dialog, Button, ConfirmPopup, Toast, useConfirm, useToast } from "primevue";
 
@@ -197,6 +200,9 @@
             <EditorMessageEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'message'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <EditorCommandEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'command'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <EditorReplyEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'reply'" :node-data="getNodeInfo(nodeEditId)?.data" />
+            <EditorVariableEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'variable'" :node-data="getNodeInfo(nodeEditId)?.data" />
+            <EditorCommentEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'comment'" :node-data="getNodeInfo(nodeEditId)?.data" />
+            <EditorErrorEdit v-if="DBLNodes[getNodeInfo(nodeEditId)?.data.typ].editor == 'error'" :node-data="getNodeInfo(nodeEditId)?.data" />
             <div class="flex">
                 <Button class="ml-auto" severity="danger" @click="deleteNode()"><i class="pi pi-trash"></i>Delete</Button>
                 <Button class="ml-2" @click="nodeEdit = false"><i class="pi pi-save"></i>Save</Button>

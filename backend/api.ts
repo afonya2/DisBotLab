@@ -127,14 +127,16 @@ export default function (app: Application, db: Database, config: any, client: Cl
 
         let memoryUsage = process.memoryUsage()
         let interactions = await dbSelect(db, 'SELECT COUNT(*) as count FROM interactions')
+        let modules = await dbSelect(db, 'SELECT COUNT(*) as count FROM modules')
+        let errors = await dbSelect(db, 'SELECT COUNT(*) as count FROM interactions WHERE success = 0')
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {
             uptime: process.uptime(),
             memoryUsage: Math.floor(memoryUsage.heapUsed / 1024 / 1024 * 100)/100,
             interactions: interactions[0].count,
             servers: client.guilds.cache.size,
-            modules: 0,
-            errors: 0
+            modules: modules[0].count,
+            errors: errors[0].count,
         }))
     })
 

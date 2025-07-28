@@ -8,14 +8,25 @@ export default function (db: Database, config: any, client: Client, getVar: (nam
 
         let commands = getVar("commands");
         if (commands[interaction.commandName] === undefined) {
-            await interaction.reply({ content: "Command not found", ephemeral: true });
+            await interaction.reply({ content: "Command not found", flags: MessageFlagsBitField.Flags.Ephemeral });
             return;
         }
         let command = commands[interaction.commandName];
-        let flow = new Flow(command.module, command.nodeId);
+        let flow = new Flow(db, command.module, command.nodeId);
         await flow.load(db)
-        await flow.run(client, {
-            channel: interaction.channelId
-        }, interaction);
+        try {
+            await flow.run(client, {
+                channel: interaction.channelId,
+                user: interaction.user.id,
+                guild: interaction.guildId
+            }, interaction);
+            await utils.asyncDb(db, "INSERT INTO interactions (id, date, success, userId) VALUES (?, ?, ?, ?)", interaction.id, new Date(), true, interaction.user.id);
+        } catch (e: any) {
+            console.error("Error running flow:", e);
+            if (!interaction.replied) {
+                await interaction.reply({ content: "An error occurred while executing the command.", flags: MessageFlagsBitField.Flags.Ephemeral });
+            }
+            await utils.asyncDb(db, "INSERT INTO interactions (id, date, success, userId, error) VALUES (?, ?, ?, ?, ?)", interaction.id, new Date(), false, interaction.user.id, e.message);
+        }
     });
 }

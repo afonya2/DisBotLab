@@ -167,10 +167,12 @@ class Flow {
     public flow: FlowNode[] = [];
     public flowVariables: { [key: string]: any } = {};
     public privateVariables: { [key: string]: any } = {};
+    database: Database;
 
-    constructor(module: number, startId: number) {
+    constructor(db: Database, module: number, startId: number) {
         this.module = module;
         this.startId = startId;
+        this.database = db;
     }
 
     async load(db: Database) {
@@ -228,6 +230,20 @@ class Flow {
                         });
                     }
                 }
+            } else if (node.type == "setVariable") {
+                if (!node.data.global) {
+                    this.flowVariables[node.data.variable] = completeVariables(node.data.value, this.flowVariables);
+                } else {
+                    let varExists = await dbSelect(this.database, "SELECT * FROM moduleVariables WHERE name = ? AND module = ?", node.data.variable, this.module);
+                    if (varExists.length === 0) {
+                        await asyncDb(this.database, "INSERT INTO moduleVariables (name, value, module) VALUES (?, ?, ?)", node.data.variable, completeVariables(node.data.value, this.flowVariables), this.module);
+                    } else {
+                        await asyncDb(this.database, "UPDATE moduleVariables SET value = ? WHERE name = ? AND module = ?", completeVariables(node.data.value, this.flowVariables), node.data.variable, this.module);
+                    }
+                }
+            } else if (node.type == "error") {
+                let errorMessage = completeVariables(node.data.message, this.flowVariables);
+                throw new Error(errorMessage);
             }
         }
     }
