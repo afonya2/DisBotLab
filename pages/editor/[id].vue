@@ -25,7 +25,7 @@
     const moduleName = ref("Loading...");
 
     function onConnect(params: Connection) {
-        let alreadyExists = edges.value.findIndex(edge => edge.target === params.target);
+        let alreadyExists = edges.value.findIndex(edge => edge.target === params.target || edge.source === params.source);
         if (alreadyExists != -1) {
             edges.value.splice(alreadyExists, 1);
         }

@@ -133,7 +133,7 @@ async function reloadCommands(client: Client, commands: { [key: string]: Command
     console.log("Commands reloaded!");
 }
 
-function completeVariables(input: string, variables: { [key: string]: any }): string {
+function completeVariables(input: string, variables: { [key: string]: any }, globalVariables: { [key: string]: any }): string {
     let completions: { [key: string]: any } = {};
     function recAddCompletions(vars: { [key: string]: any }, prefix: string) {
         for (let key in vars) {
@@ -146,11 +146,14 @@ function completeVariables(input: string, variables: { [key: string]: any }): st
             }
         }
     }
+    recAddCompletions(globalVariables, '');
     recAddCompletions(variables, '');
     for (let c in completions) {
         const value = completions[c];
-        input = input.replace(new RegExp(`\\{${c}\\}`, 'g'), value);
+        input = input.replace(new RegExp(`\\{${c}\\}`, 'g'), value.toString().replace(/{/g, '&#opnvar'));
+        input = input.replace(new RegExp(`\\{insecure:${c}\\}`, 'g'), value.toString());
     }
+    input = input.replace(/&#opnvar/g, '{');
     return input;
 }
 
@@ -203,12 +206,18 @@ class Flow {
     async run(client: Client, beginEvent: any = {}, beginPrivate: any = {}) {
         for (let i = 0; i < this.flow.length; i++) {
             const node = this.flow[i];
+            let dbVars = await dbSelect(this.database, "SELECT * FROM moduleVariables WHERE module = ?", this.module);
+            let globalVariables: { [key: string]: any } = {};
+            for (let j = 0; j < dbVars.length; j++) {
+                const dbVar = dbVars[j];
+                globalVariables[dbVar.name] = dbVar.value;
+            }
             if (node.type == "command") {
                 this.flowVariables[node.data.variable] = beginEvent
                 this.privateVariables[node.data.variable] = beginPrivate
             } else if (node.type == "sendMessage") {
-                let channel = completeVariables(node.data.channel, this.flowVariables);
-                let content = completeVariables(node.data.content, this.flowVariables);
+                let channel = completeVariables(node.data.channel, this.flowVariables, globalVariables);
+                let content = completeVariables(node.data.content, this.flowVariables, globalVariables);
                 let channelObj = await client.channels.fetch(channel);
                 if (channelObj instanceof TextChannel) {
                     await channelObj.send({
@@ -216,7 +225,7 @@ class Flow {
                     });
                 }
             } else if (node.type == "reply") {
-                let content = completeVariables(node.data.content, this.flowVariables);
+                let content = completeVariables(node.data.content, this.flowVariables, globalVariables);
                 let interaction = this.privateVariables[node.data.interaction]
                 if (interaction && interaction.isRepliable()) {
                     if (node.data.ephemeral) {
@@ -232,17 +241,17 @@ class Flow {
                 }
             } else if (node.type == "setVariable") {
                 if (!node.data.global) {
-                    this.flowVariables[node.data.variable] = completeVariables(node.data.value, this.flowVariables);
+                    this.flowVariables[node.data.variable] = completeVariables(node.data.value, this.flowVariables, globalVariables);
                 } else {
                     let varExists = await dbSelect(this.database, "SELECT * FROM moduleVariables WHERE name = ? AND module = ?", node.data.variable, this.module);
                     if (varExists.length === 0) {
-                        await asyncDb(this.database, "INSERT INTO moduleVariables (name, value, module) VALUES (?, ?, ?)", node.data.variable, completeVariables(node.data.value, this.flowVariables), this.module);
+                        await asyncDb(this.database, "INSERT INTO moduleVariables (name, value, module) VALUES (?, ?, ?)", node.data.variable, completeVariables(node.data.value, this.flowVariables, globalVariables), this.module);
                     } else {
-                        await asyncDb(this.database, "UPDATE moduleVariables SET value = ? WHERE name = ? AND module = ?", completeVariables(node.data.value, this.flowVariables), node.data.variable, this.module);
+                        await asyncDb(this.database, "UPDATE moduleVariables SET value = ? WHERE name = ? AND module = ?", completeVariables(node.data.value, this.flowVariables, globalVariables), node.data.variable, this.module);
                     }
                 }
             } else if (node.type == "error") {
-                let errorMessage = completeVariables(node.data.message, this.flowVariables);
+                let errorMessage = completeVariables(node.data.message, this.flowVariables, globalVariables);
                 throw new Error(errorMessage);
             }
         }

@@ -79,7 +79,7 @@ const DBLNodes: { [key: string]: DBLNode } = {
         defaultSave: {
             message: "An error occurred"
         },
-        variant: "default",
+        variant: "output",
         editor: "error"
     }
 }
