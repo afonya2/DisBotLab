@@ -338,6 +338,11 @@ export default function (app: Application, db: Database, config: any, client: Cl
         if (newSettings.token === "__NOT_CHANGED__") {
             newSettings.token = config.token
         }
+        if (newSettings.backendPort != config.backendPort || newSettings.frontendPort != config.frontendPort) {
+            setTimeout(() => {
+                process.exit(69)
+            }, 1000)
+        }
         fs.writeFileSync('../config.json', JSON.stringify(newSettings, null, 4), 'utf-8')
         config = newSettings
     })
