@@ -105,7 +105,7 @@
                     <div>
                         <h2 class="text-2xl">Demo server</h2>
                         <p class="text-lg">Want to test what you made?</p>
-                        <a href="https://dbl.afonyanet.hu/docs" target="_blank">Join the server!</a>
+                        <a href="https://dbl.afonyanet.hu/docs/intro" target="_blank">Join the server!</a>
                     </div>
                 </ContentCard>
             </ContentCard>
