@@ -276,6 +276,15 @@ class Flow {
                     case "<=":
                         condition = Number(left) <= Number(right);
                         break;
+                    case "includes":
+                        condition = left.includes(right);
+                        break;
+                    case "startsWith":
+                        condition = left.startsWith(right);
+                        break;
+                    case "endsWith":
+                        condition = left.endsWith(right);
+                        break;
                     default:
                         throw new Error("Unknown condition: " + node.data.condition);
                 }
@@ -360,6 +369,9 @@ class Flow {
                         break;
                     case "%":
                         result = left % right;
+                        break;
+                    case "^":
+                        result = Math.pow(left, right);
                         break;
                     default:
                         throw new Error("Unknown operator: " + node.data.operator);
