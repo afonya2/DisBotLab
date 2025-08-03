@@ -11,14 +11,14 @@
             items: [
                 { label: 'Home', icon: 'pi pi-home', url: '/' },
                 { label: 'Modules', icon: 'pi pi-file', url: '/modules' },
-                { label: 'Databases', icon: 'pi pi-database', url: '/databases' }
+                { label: 'Databases', icon: 'pi pi-database', url: '/databases', disabled: true }
             ]
         },
         {
             label: 'Administration',
             items: [
                 { label: 'Users', icon: 'pi pi-users', url: '/users' },
-                { label: 'Logs', icon: 'pi pi-list', url: '/logs' },
+                { label: 'Logs', icon: 'pi pi-list', url: '/logs', disabled: true },
                 { label: 'Settings And Status', icon: 'pi pi-server', url: '/settings' }
             ]
         },
@@ -32,7 +32,7 @@
         {
             label: 'User',
             items: [
-                { label: 'Loading...', icon: 'pi pi-user' },
+                { label: 'Loading...', icon: 'pi pi-user', disabled: true },
                 { label: 'Sign out', icon: 'pi pi-sign-out', command: () => logout() }
             ]
         }
@@ -47,7 +47,7 @@
         window.location.href = "/login";
     }
 
-    /*onMounted(async () => {
+    onMounted(async () => {
         let mereq = await fetch("https://discord.com/api/users/@me", {
             headers: {
                 'Authorization': `Bearer ${await utils.getToken()}`
@@ -58,7 +58,7 @@
             if (!menuItems.value[3].items) return
             menuItems.value[3].items[0].label = meres.username;
         }
-    });*/
+    });
 </script>
 
 <template>

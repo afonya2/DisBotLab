@@ -3,6 +3,7 @@
     import StatCard from '~/components/StatCard.vue';
     import ContentCard from '~/components/ContentCard.vue';
     import utils from './utils';
+    import { Tag } from 'primevue';
 
     useHead({
         title: 'DBL - Home',
@@ -72,15 +73,15 @@
                     <div>
                         <h2 class="text-2xl">Make some modules!</h2>
                         <p class="text-lg">Create some modules for your Discord bot.</p>
-                        <a href="">Click me!</a>
+                        <a href="/modules">Click me!</a>
                     </div>
                 </ContentCard>
                 <ContentCard class="w-full lg:w-[calc(50%-1rem)] flex items-center gap-4">
                     <i class="pi pi-database text-4xl"></i>
                     <div>
-                        <h2 class="text-2xl">Make some databases!</h2>
+                        <h2 class="text-2xl">Make some databases! <Tag severity="danger" value="Danger">Not implemented yet!</Tag></h2>
                         <p class="text-lg">Databases let you easily store your data.</p>
-                        <a href="">Click me!</a>
+                        <a href="/databases">Click me!</a>
                     </div>
                 </ContentCard>
                 <ContentCard class="w-full lg:w-[calc(50%-1rem)] flex items-center gap-4">
@@ -88,7 +89,7 @@
                     <div>
                         <h2 class="text-2xl">Modify some settings!</h2>
                         <p class="text-lg">Don't like something you configured? Change it here. You can also see some system information here too!</p>
-                        <a href="">Click me!</a>
+                        <a href="/settings">Click me!</a>
                     </div>
                 </ContentCard>
                 <ContentCard class="w-full lg:w-[calc(50%-1rem)] flex items-center gap-4">
@@ -96,7 +97,7 @@
                     <div>
                         <h2 class="text-2xl">Documentation</h2>
                         <p class="text-lg">Don't know how stuff works? Check this out!</p>
-                        <a href="">Click me!</a>
+                        <a href="https://dbl.afonyanet.hu/docs" target="_blank">Click me!</a>
                     </div>
                 </ContentCard>
             </ContentCard>
