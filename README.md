@@ -5,6 +5,7 @@ A simple, no-code Discord bot creator
 
 ## Requirements
 - Node.js with npm installed
+- An SQLite database set up [more info](https://dbl.afonyanet.hu/docs/database)
 
 ## How to set up?
 - Download the repository. (or use `git clone`)
@@ -16,19 +17,20 @@ A simple, no-code Discord bot creator
 - create the config file [more info](#config)
 - now go back to the main folder and run `npm run prod`
 - (Alternatively run `tsx starter.ts`)
+- Access it on: `http://localhost:3000`
 
 ## Config
 name: `config.json`
 ```json
 {
     "backendPort": 1020, //The port for the backend
-    "frontendPort": 3000, //The port for the frontend (you want this to be public)
+    "frontendPort": 3000, //The port for the frontend (currently doesn't change anything)
     "clientId": "", //The clientID of your Discord app
     "clientSecret": "", //The client secret of your Discord app
     "redirectUri": "http://localhost:3000/login", //The redirect URI you use, must redirect to "http(s)://yourdomain:frontendport/login"
     "authLink": "", //Generate an authlink, make sure to give it identify permission
     "token": "", //The token of your Discord bot
-    "version": "0.1.0" //Do not edit; currently there is no use for this
+    "version": "0.1.0" //Do not edit; currently there is no use for this, make sure it is in the config.
 }
 ```
 
