@@ -322,8 +322,8 @@ export default function (app: Application, db: Database, config: any, client: Cl
             return
         }
         let newSettings = {
-            backendPort: req.body.backendPort,
-            frontendPort: req.body.frontendPort,
+            backendPort: Number(req.body.backendPort),
+            frontendPort: Number(req.body.frontendPort),
             clientId: req.body.clientId,
             clientSecret: req.body.clientSecret,
             redirectUri: req.body.redirectUri,
