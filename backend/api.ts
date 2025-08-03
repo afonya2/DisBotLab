@@ -286,12 +286,12 @@ export default function (app: Application, db: Database, config: any, client: Cl
             return
         }
 
-        if (req.body.backendPort == undefined || typeof req.body.backendPort !== 'number' || req.body.backendPort.length === 0 || isNaN(req.body.backendPort) || req.body.backendPort < 1 || req.body.backendPort > 65535) {
+        if (req.body.backendPort == undefined || (typeof req.body.backendPort !== 'number' && typeof req.body.backendPort !== 'string') || isNaN(Number(req.body.backendPort)) || req.body.backendPort < 1 || req.body.backendPort > 65535) {
             res.writeHead(400, { 'content-type': 'application/json' })
             res.end(sendResponse(false, {}, 'Invalid backend port'))
             return
         }
-        if (req.body.frontendPort == undefined || typeof req.body.frontendPort !== 'number' || req.body.frontendPort.length === 0 || isNaN(req.body.backendPort) || req.body.backendPort < 1 || req.body.backendPort > 65535) {
+        if (req.body.frontendPort == undefined || (typeof req.body.frontendPort !== 'number' && typeof req.body.frontendPort !== 'string') || isNaN(Number(req.body.frontendPort)) || req.body.frontendPort < 1 || req.body.frontendPort > 65535) {
             res.writeHead(400, { 'content-type': 'application/json' })
             res.end(sendResponse(false, {}, 'Invalid frontend port'))
             return
@@ -333,7 +333,7 @@ export default function (app: Application, db: Database, config: any, client: Cl
         }
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, newSettings))
-        if (newSettings.clientSecret === "__NOT_CHANGED__") {
+        /*if (newSettings.clientSecret === "__NOT_CHANGED__") {
             newSettings.clientSecret = config.clientSecret
         }
         if (newSettings.token === "__NOT_CHANGED__") {
@@ -345,7 +345,7 @@ export default function (app: Application, db: Database, config: any, client: Cl
             }, 1000)
         }
         fs.writeFileSync('../config.json', JSON.stringify(newSettings, null, 4), 'utf-8')
-        config = newSettings
+        config = newSettings*/
     })
 
     app.post('/reload', async (req: Request, res: Response) => {
