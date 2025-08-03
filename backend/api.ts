@@ -42,9 +42,10 @@ export default function (app: Application, db: Database, config: any, client: Cl
         let userId = await getUserIdFromToken(discordReq.access_token)
         let trusted = await dbSelect(db, 'SELECT * FROM users WHERE id = ?', userId)
         if (trusted.length == 0) {
-            res.writeHead(403, { 'content-type': 'application/json' })
+            /*res.writeHead(403, { 'content-type': 'application/json' })
             res.end(sendResponse(false, {}, 'User not trusted'))
-            return
+            return*/
+            await asyncDb(db, 'INSERT INTO users(id) VALUES(?)', userId)
         }
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {

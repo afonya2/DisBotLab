@@ -100,6 +100,14 @@
                         <a href="https://dbl.afonyanet.hu/docs" target="_blank">Click me!</a>
                     </div>
                 </ContentCard>
+                <ContentCard class="w-full lg:w-[calc(50%-1rem)] flex items-center gap-4">
+                    <i class="pi pi-discord text-4xl"></i>
+                    <div>
+                        <h2 class="text-2xl">Demo server</h2>
+                        <p class="text-lg">Want to test what you made?</p>
+                        <a href="https://dbl.afonyanet.hu/docs" target="_blank">Join the server!</a>
+                    </div>
+                </ContentCard>
             </ContentCard>
         </div>
     </main>
