@@ -15,7 +15,8 @@ description: Let's install DBL!
 - Run `npm run build`
 - Then go to the folder named backend `cd backend`
 - Run `npm install` there too
-- Create the config file [more info](./config)
+- Create the database in `backend/database.db` [based on this](./database.md)
+- Create the config file in `config.json` [more info](./config)
 - Now go back to the main folder `cd ..` and run `npm run prod`
 - (Alternatively run `tsx starter.ts`)
 - Access it on: `http://localhost:3000`
