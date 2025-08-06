@@ -97,7 +97,7 @@
                     <div>
                         <h2 class="text-2xl">Documentation</h2>
                         <p class="text-lg">Don't know how stuff works? Check this out!</p>
-                        <a href="https://dbl.afonyanet.hu/docs" target="_blank">Click me!</a>
+                        <a href="https://dbl.afonyanet.hu/docs/intro" target="_blank">Click me!</a>
                     </div>
                 </ContentCard>
             </ContentCard>

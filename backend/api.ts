@@ -285,12 +285,12 @@ export default function (app: Application, db: Database, config: any, client: Cl
             return
         }
 
-        if (req.body.backendPort == undefined || typeof req.body.backendPort !== 'number' || req.body.backendPort.length === 0 || isNaN(req.body.backendPort) || req.body.backendPort < 1 || req.body.backendPort > 65535) {
+        if (req.body.backendPort == undefined || (typeof req.body.backendPort !== 'number' && typeof req.body.backendPort !== 'string') || isNaN(Number(req.body.backendPort)) || Number(req.body.backendPort) < 1 || Number(req.body.backendPort) > 65535) {
             res.writeHead(400, { 'content-type': 'application/json' })
             res.end(sendResponse(false, {}, 'Invalid backend port'))
             return
         }
-        if (req.body.frontendPort == undefined || typeof req.body.frontendPort !== 'number' || req.body.frontendPort.length === 0 || isNaN(req.body.backendPort) || req.body.backendPort < 1 || req.body.backendPort > 65535) {
+        if (req.body.frontendPort == undefined || (typeof req.body.frontendPort !== 'number' && typeof req.body.frontendPort !== 'string') || isNaN(Number(req.body.frontendPort)) || Number(req.body.frontendPort) < 1 || Number(req.body.frontendPort) > 65535) {
             res.writeHead(400, { 'content-type': 'application/json' })
             res.end(sendResponse(false, {}, 'Invalid frontend port'))
             return
@@ -321,8 +321,8 @@ export default function (app: Application, db: Database, config: any, client: Cl
             return
         }
         let newSettings = {
-            backendPort: req.body.backendPort,
-            frontendPort: req.body.frontendPort,
+            backendPort: Number(req.body.backendPort),
+            frontendPort: Number(req.body.frontendPort),
             clientId: req.body.clientId,
             clientSecret: req.body.clientSecret,
             redirectUri: req.body.redirectUri,
