@@ -452,11 +452,18 @@ export default function (app: Application, db: Database, config: any, client: Cl
             return
         }
         await asyncDb(db, 'INSERT INTO modules(name, description, enabled) VALUES(?, ?, ?)', req.body.name, req.body.description, 1)
+        let newId = await dbSelect(db, 'SELECT MAX(id) FROM modules WHERE name = ? AND description = ?', req.body.name, req.body.description)
+        if (newId.length === 0) {
+            res.writeHead(500, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Failed to create module'))
+            return
+        }
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {
             name: req.body.name,
             description: req.body.description,
-            enabled: true
+            enabled: true,
+            id: newId[0]['MAX(id)']
         }))
     })
 
@@ -700,5 +707,154 @@ export default function (app: Application, db: Database, config: any, client: Cl
         }))
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, { nodes, edges }))
+    })
+
+    app.get('/module/:id/export', async (req: Request, res: Response) => {
+        if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid token'))
+            return
+        }
+        let userId = await getUserIdFromToken(req.headers.authorization)
+        let trusted = await dbSelect(db, 'SELECT * FROM users WHERE id = ?', userId)
+        if (trusted.length == 0) {
+            res.writeHead(403, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'User not trusted'))
+            return
+        }
+
+        if (req.params.id == undefined || typeof req.params.id !== 'string' || req.params.id.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid module ID'))
+            return
+        }
+        let moduleExists = await dbSelect(db, 'SELECT * FROM modules WHERE id = ?', req.params.id)
+        if (moduleExists.length == 0) {
+            res.writeHead(404, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Module not found'))
+            return
+        }
+        let nodes = await dbSelect(db, 'SELECT * FROM nodes WHERE module = ?', req.params.id)
+        nodes = nodes.map((node) => ({
+            id: node.id,
+            x: node.x,
+            y: node.y,
+            type: node.type,
+            data: JSON.parse(node.data || '{}')
+        }))
+        let edges = await dbSelect(db, 'SELECT * FROM edges WHERE module = ?', req.params.id)
+        edges = edges.map((edge) => ({
+            id: edge.id,
+            from: edge.from,
+            to: edge.to
+        }))
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(sendResponse(true, {
+            version: "0.2.0",
+            type: "DBL_MODULE",
+            name: moduleExists[0].name,
+            description: moduleExists[0].description,
+            nodes,
+            edges
+        }))
+    })
+
+    app.post('/modules/import', async (req: Request, res: Response) => {
+        if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid token'))
+            return
+        }
+        let userId = await getUserIdFromToken(req.headers.authorization)
+        let trusted = await dbSelect(db, 'SELECT * FROM users WHERE id = ?', userId)
+        if (trusted.length == 0) {
+            res.writeHead(403, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'User not trusted'))
+            return
+        }
+
+        if (req.body.type == undefined || typeof req.body.type !== 'string' || req.body.type !== 'DBL_MODULE') {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid module type'))
+            return
+        }
+        if (req.body.version == undefined || typeof req.body.version !== 'string' || req.body.version !== config.version) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid module version'))
+            return
+        }
+        if (req.body.name == undefined || typeof req.body.name !== 'string' || req.body.name.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid module name'))
+            return
+        }
+        if (req.body.description == undefined || typeof req.body.description !== 'string' || req.body.description.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid module description'))
+            return
+        }
+        if (req.body.nodes == undefined || !Array.isArray(req.body.nodes)) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid nodes'))
+            return
+        }
+        if (req.body.edges == undefined || !Array.isArray(req.body.edges)) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid edges'))
+            return
+        }
+        await asyncDb(db, 'INSERT INTO modules(name, description, enabled) VALUES(?, ?, ?)', req.body.name, req.body.description, 1)
+        let newId = await dbSelect(db, 'SELECT MAX(id) FROM modules WHERE name = ? AND description = ?', req.body.name, req.body.description)
+        if (newId.length === 0) {
+            res.writeHead(500, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Failed to create module'))
+            return
+        }
+        for (let i = 0; i < req.body.nodes.length; i++) {
+            const node = req.body.nodes[i];
+            await asyncDb(db, 'INSERT INTO nodes (module, id, type, x, y, data) VALUES (?, ?, ?, ?, ?, ?)', newId[0]['MAX(id)'], node.id, node.type, node.x, node.y, JSON.stringify(node.data))
+        }
+        for (let i = 0; i < req.body.edges.length; i++) {
+            const edge = req.body.edges[i];
+            await asyncDb(db, 'INSERT INTO edges (module, id, "from", "to") VALUES (?, ?, ?, ?)', newId[0]['MAX(id)'], edge.id, edge.from, edge.to)
+        }
+        let newCommands = await getCommands(db)
+        let changed = false
+        for (let i in newCommands) {
+            const command = newCommands[i];
+            if (getVar("commands")[command.name] === undefined) {
+                changed = true
+                break
+            } else if (getVar("commands")[command.name].name !== command.name || getVar("commands")[command.name].description !== command.description || getVar("commands")[command.name].module !== command.module || getVar("commands")[command.name].nodeId !== command.nodeId) {
+                changed = true
+                break
+            }
+        }
+        if (!changed) {
+            for (let i in getVar("commands")) {
+                const command = getVar("commands")[i];
+                if (newCommands[command.name] === undefined) {
+                    changed = true
+                    break
+                } else if (newCommands[command.name].name !== command.name || newCommands[command.name].description !== command.description || getVar("commands")[command.name].module !== command.module || getVar("commands")[command.name].nodeId !== command.nodeId) {
+                    changed = true
+                    break
+                }
+            }
+        }
+        if (changed) {
+            setVar("commands", newCommands)
+            console.warn("Commands have been changed, reloading commands...")
+            setTimeout(() => {
+                reloadCommands(client, getVar("commands"))
+            }, 5000)
+        }
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(sendResponse(true, {
+            name: req.body.name,
+            description: req.body.description,
+            enabled: true,
+            id: newId[0]['MAX(id)']
+        }))
     })
 }

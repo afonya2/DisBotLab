@@ -14,6 +14,8 @@
     const newName = ref("")
     const newDescription = ref("")
     const editId = ref("")
+    let importon = ref(false);
+    let importData = ref("");
     let modules: Ref<{ id: string, name: string, description: string, enabled: boolean }[]> = ref([]);
 
     async function getModules() {
@@ -131,6 +133,44 @@
     async function openEditor(id: string) {
         window.location.href = `/editor/${id}`;
     }
+    async function exportModule(id: string) {
+        let req = await utils.apiGet(`/api/module/${id}/export`);
+        if (req.ok) {
+            toast.add({ severity: 'success', summary: 'Success', detail: `Module ${req.body.name} exported successfully.` });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([JSON.stringify(req.body, null, 4)], { type: 'application/json' }));
+            link.download = `${req.body.name}.json`;
+            link.click();
+        } else {
+            console.error("Failed to export module:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: `Failed to export module: ${req.error}` });
+        }
+    }
+    async function importModule() {
+        let data: any;
+        try {
+            data = JSON.parse(importData.value);
+        } catch (e) {
+            console.error("Invalid JSON format:", e);
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Invalid JSON format.' });
+            return;
+        }
+        let req = await utils.apiPost('/api/modules/import', JSON.stringify(data));
+        if (req.ok) {
+            modules.value.push({
+                id: req.body.id,
+                name: req.body.name,
+                description: req.body.description,
+                enabled: true
+            });
+            toast.add({ severity: 'success', summary: 'Success', detail: `Module ${req.body.name} imported successfully.` });
+            importon.value = false;
+            importData.value = "";
+        } else {
+            console.error("Failed to import module:", req.error);
+            toast.add({ severity: 'error', summary: 'Error', detail: `Failed to import module: ${req.error}` });
+        }
+    }
     onMounted(async () => {
         if (!await utils.checkAuth()) {
             window.location.href = "/login";
@@ -157,11 +197,18 @@
             <Button class="ml-auto block" @click="editModule()">Save</Button>
         </div>
     </Dialog>
+    <Dialog v-model:visible="importon" modal header="Import module" class="w-full sm:w-96">
+        <Textarea class="mt-2 w-full" v-model="importData" placeholder="Paste your module JSON here" />
+        <div class="mt-2">
+            <Button class="ml-auto block" @click="importModule()">Import</Button>
+        </div>
+    </Dialog>
     <main>
         <div class="flex flex-col gap-4">
             <h1 class="text-4xl">Modules</h1>
             <ContentCard class="flex flex-wrap gap-4">
                 <Button severity="secondary" @click="newName = '';newDescription = '';createNew = true"><i class="pi pi-plus"></i>Create new</Button>
+                <Button severity="secondary" @click="importon = true"><i class="pi pi-file-import"></i>Import</Button>
                 <Button severity="secondary" @click="getModules()"><i class="pi pi-refresh"></i>Refresh</Button>
                 <DataTable :value="modules" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" class="w-full">
                     <Column field="name" header="Name" style="width: 25%"></Column>
@@ -171,6 +218,7 @@
                             <Button :class="data.enabled ? 'p-button-success' : 'p-button-secondary'" @click="toggleModule(data.id)"><i class="pi" :class="data.enabled ? 'pi-check' : 'pi-times'"></i></Button>
                             <Button class="ml-2" @click="openEditor(data.id)"><i class="pi pi-file-edit"></i></Button>
                             <Button class="ml-2" @click="newName = data.name;newDescription = data.description;editId = data.id;edit = true"><i class="pi pi-pencil"></i></Button>
+                            <Button class="ml-2" @click="exportModule(data.id)"><i class="pi pi-file-export"></i></Button>
                             <Button class="ml-2" severity="danger" @click="deleteModule($event, data.id)"><i class="pi pi-trash"></i></Button>
                         </template>
                     </Column>
