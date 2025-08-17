@@ -857,4 +857,47 @@ export default function (app: Application, db: Database, config: any, client: Cl
             id: newId[0]['MAX(id)']
         }))
     })
+
+    app.get('/logs', async (req, res) => {
+        if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid token'))
+            return
+        }
+        let userId = await getUserIdFromToken(req.headers.authorization)
+        let trusted = await dbSelect(db, 'SELECT * FROM users WHERE id = ?', userId)
+        if (trusted.length == 0) {
+            res.writeHead(403, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'User not trusted'))
+            return
+        }
+
+        const logs = await dbSelect(db, 'SELECT * FROM logs ORDER BY date DESC LIMIT 100')
+        const logsOut = logs.map(log => ({
+            date: log.date,
+            type: log.type,
+            message: log.message
+        }))
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(sendResponse(true, logsOut))
+    })
+
+    app.delete('/logs', async (req, res) => {
+        if (req.headers.authorization == undefined || typeof req.headers.authorization !== 'string' || req.headers.authorization.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid token'))
+            return
+        }
+        let userId = await getUserIdFromToken(req.headers.authorization)
+        let trusted = await dbSelect(db, 'SELECT * FROM users WHERE id = ?', userId)
+        if (trusted.length == 0) {
+            res.writeHead(403, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'User not trusted'))
+            return
+        }
+
+        await asyncDb(db, 'DELETE FROM logs')
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(sendResponse(true, {}))
+    })
 }

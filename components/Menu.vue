@@ -18,7 +18,7 @@
             label: 'Administration',
             items: [
                 { label: 'Users', icon: 'pi pi-users', url: '/users' },
-                { label: 'Logs', icon: 'pi pi-list', url: '/logs', disabled: true },
+                { label: 'Logs', icon: 'pi pi-list', url: '/logs' },
                 { label: 'Settings And Status', icon: 'pi pi-server', url: '/settings' }
             ]
         },
@@ -26,7 +26,8 @@
             label: 'DBL',
             items: [
                 { label: 'Github', icon: 'pi pi-github', url: 'https://github.com/afonya2/DisBotLab', target: '_blank' },
-                { label: 'Issues', icon: 'pi pi-exclamation-triangle', url: 'https://github.com/afonya2/DisBotLab/issues', target: '_blank' }
+                { label: 'Issues', icon: 'pi pi-exclamation-triangle', url: 'https://github.com/afonya2/DisBotLab/issues', target: '_blank' },
+                { label: 'Documentation', icon: 'pi pi-book', url: 'https://dbl.afonyanet.hu/docs/intro', target: '_blank' }
             ]
         },
         {

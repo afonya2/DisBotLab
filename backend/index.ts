@@ -13,6 +13,22 @@ const db = new sqlite.Database('./database.db')
 const client = new Client({ intents: [GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages, GatewayIntentBits.Guilds] })
 let commands: { [key: string]: Command } = {}
 
+let olog = console.log
+console.log = (...args: any[]) => {
+    olog(...args)
+    db.run("INSERT INTO logs (date, type, message) VALUES (?, ?, ?)", new Date(), "log", args.join(' '))
+}
+let owarn = console.warn
+console.warn = (...args: any[]) => {
+    owarn(...args)
+    db.run("INSERT INTO logs (date, type, message) VALUES (?, ?, ?)", new Date(), "warn", args.join(' '))
+}
+let oerr = console.error
+console.error = (...args: any[]) => {
+    oerr(...args)
+    db.run("INSERT INTO logs (date, type, message) VALUES (?, ?, ?)", new Date(), "error", args.join(' '))
+}
+
 app.use(express.json())
 
 client.once('ready', () => {
