@@ -63,7 +63,7 @@
 </script>
 
 <template>
-    <Menu :model="menuItems" style="width: 250px;" class="h-screen">
+    <Menu :model="menuItems" style="width: 250px;overflow: auto;" class="h-screen">
         <template #start>
             <img src="/logo.svg" alt="logo">
             <Divider />

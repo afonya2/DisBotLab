@@ -3,6 +3,10 @@ enum DBLNodeCategory {
     Action = 'Action',
     Variables = 'Variables',
     Control = 'Control',
+    JSON = 'JSON',
+    Table = 'Table',
+    Lookup = 'Lookup',
+    String = 'String',
     Other = 'Other'
 }
 
@@ -188,6 +192,108 @@ const DBLNodes: { [key: string]: DBLNode } = {
         },
         variant: "default",
         editor: "log"
+    },
+    "jsonStringify": {
+        name: "JSON Stringify",
+        description: "Converts an object to a JSON string.",
+        category: DBLNodeCategory.JSON,
+        defaultSave: {
+            input: "",
+            variable: ""
+        },
+        variant: "default",
+        editor: "json"
+    },
+    "jsonParse": {
+        name: "JSON Parse",
+        description: "Parses a JSON string into an object.",
+        category: DBLNodeCategory.JSON,
+        defaultSave: {
+            input: "",
+            variable: ""
+        },
+        variant: "default",
+        editor: "json"
+    },
+    "tblCreate": {
+        name: "Table create",
+        description: "Creates a new table.",
+        category: DBLNodeCategory.Table,
+        defaultSave: {
+            variable: ""
+        },
+        variant: "default",
+        editor: "table" 
+    },
+    "tblLength": {
+        name: "Table length",
+        description: "Gets the length of a table.",
+        category: DBLNodeCategory.Table,
+        defaultSave: {
+            input: "",
+            variable: ""
+        },
+        variant: "default",
+        editor: "json"
+    },
+    "tblGet": {
+        name: "Table get",
+        description: "Gets a value from a table.",
+        category: DBLNodeCategory.Table,
+        defaultSave: {
+            table: "",
+            key: "",
+            variable: ""
+        },
+        variant: "default",
+        editor: "table"
+    },
+    "tblSet": {
+        name: "Table set",
+        description: "Sets a value in a table.",
+        category: DBLNodeCategory.Table,
+        defaultSave: {
+            table: "",
+            key: "",
+            value: ""
+        },
+        variant: "default",
+        editor: "table"
+    },
+    "tblAppend": {
+        name: "Table append",
+        description: "Appends a value to a table.",
+        category: DBLNodeCategory.Table,
+        defaultSave: {
+            table: "",
+            value: ""
+        },
+        variant: "default",
+        editor: "table"
+    },
+    "tblJoin": {
+        name: "Table join",
+        description: "Joins table values.",
+        category: DBLNodeCategory.Table,
+        defaultSave: {
+            table: "",
+            separator: ",",
+            variable: ""
+        },
+        variant: "default",
+        editor: "table"
+    },
+    "strSplit": {
+        name: "String split",
+        description: "Splits a string into an array of substrings.",
+        category: DBLNodeCategory.String,
+        defaultSave: {
+            input: "",
+            splitter: " ",
+            variable: ""
+        },
+        variant: "default",
+        editor: "split"
     }
 }
 
@@ -196,6 +302,10 @@ const CategoryIcons = {
     "Action": 'pi pi-play',
     "Variables": 'pi pi-th-large',
     "Control": 'pi pi-cog',
+    "JSON": 'pi pi-database',
+    "Table": 'pi pi-table',
+    "Lookup": 'pi pi-search',
+    "String": 'pi pi-align-left',
     "Other": 'pi pi-ellipsis-h'
 }
 

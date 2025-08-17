@@ -28,7 +28,7 @@
 </script>
 
 <template>
-    <Menu :model="menuItems" style="width: 250px;height: calc(100vh - 50px);"></Menu>
+    <Menu :model="menuItems" style="width: 250px;height: calc(100vh - 50px);overflow: auto;"></Menu>
 </template>
 
 <style scoped>

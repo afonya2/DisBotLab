@@ -415,6 +415,28 @@ class Flow {
             } else if (node.type == "onError") {
                 this.flowVariables[node.data.variable] = beginEvent
                 this.privateVariables[node.data.variable] = beginPrivate
+            } else if (node.type == "strSplit") {
+                this.flowVariables[node.data.variable] = completeVariables(node.data.input, this.flowVariables, globalVariables).split(completeVariables(node.data.splitter, this.flowVariables, globalVariables));
+            } else if (node.type == "tblLength") {
+                if (this.flowVariables[node.data.input]) {
+                    this.flowVariables[node.data.variable] = this.flowVariables[node.data.input].length;
+                } else if (globalVariables[node.data.input]) {
+                    this.flowVariables[node.data.variable] = globalVariables[node.data.input].length;
+                } else {
+                    this.flowVariables[node.data.variable] = "0"
+                }
+            } else if (node.type == "tblJoin") {
+                if (this.flowVariables[node.data.table]) {
+                    this.flowVariables[node.data.variable] = this.flowVariables[node.data.table].join(completeVariables(node.data.separator, this.flowVariables, globalVariables));
+                } else if (globalVariables[node.data.table]) {
+                    this.flowVariables[node.data.variable] = globalVariables[node.data.table].join(completeVariables(node.data.separator, this.flowVariables, globalVariables));
+                }
+            } else if (node.type == "tblGet") {
+                if (this.flowVariables[node.data.table]) {
+                    this.flowVariables[node.data.variable] = this.flowVariables[node.data.table][completeVariables(node.data.key, this.flowVariables, globalVariables)];
+                } else if (globalVariables[node.data.table]) {
+                    this.flowVariables[node.data.variable] = globalVariables[node.data.table][completeVariables(node.data.key, this.flowVariables, globalVariables)];
+                }
             }
         }
     }
