@@ -8,8 +8,9 @@ export default function (app: Application, db: Database, config: any, client: Cl
     app.get('/info', (req: Request, res: Response) => {
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {
-            version: `DisBotLab v${config.version}`,
-            authLink: config.authLink
+            version: `DisBotLab v${getVar("version")}`,
+            authLink: config.authLink,
+            setup: getVar("setup")
         }))
     })
 
@@ -577,6 +578,9 @@ export default function (app: Application, db: Database, config: any, client: Cl
             return
         }
         await asyncDb(db, 'DELETE FROM modules WHERE id = ?', req.params.id)
+        await asyncDb(db, 'DELETE FROM nodes WHERE module = ?', req.params.id)
+        await asyncDb(db, 'DELETE FROM edges WHERE module = ?', req.params.id)
+        await asyncDb(db, 'DELETE FROM moduleVariables WHERE module = ?', req.params.id)
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {
             id: req.params.id,
@@ -899,5 +903,132 @@ export default function (app: Application, db: Database, config: any, client: Cl
         await asyncDb(db, 'DELETE FROM logs')
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {}))
+    })
+
+    app.post('/install', async (req, res) => {
+        if (getVar("setup")) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Setup already completed'))
+            return
+        }
+
+        if (req.body.backendPort == undefined || (typeof req.body.backendPort !== 'number' && typeof req.body.backendPort !== 'string') || isNaN(Number(req.body.backendPort)) || Number(req.body.backendPort) < 1 || Number(req.body.backendPort) > 65535) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid backend port'))
+            return
+        }
+        if (req.body.frontendPort == undefined || (typeof req.body.frontendPort !== 'number' && typeof req.body.frontendPort !== 'string') || isNaN(Number(req.body.frontendPort)) || Number(req.body.frontendPort) < 1 || Number(req.body.frontendPort) > 65535) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid frontend port'))
+            return
+        }
+        if (req.body.clientId == undefined || typeof req.body.clientId !== 'string' || req.body.clientId.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid client ID'))
+            return
+        }
+        if (req.body.clientSecret == undefined || typeof req.body.clientSecret !== 'string' || req.body.clientSecret.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid client secret'))
+            return
+        }
+        if (req.body.redirectUri == undefined || typeof req.body.redirectUri !== 'string' || req.body.redirectUri.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid redirect URI'))
+            return
+        }
+        if (req.body.authLink == undefined || typeof req.body.authLink !== 'string' || req.body.authLink.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid auth link'))
+            return
+        }
+        if (req.body.token == undefined || typeof req.body.token !== 'string' || req.body.token.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid token'))
+            return
+        }
+        if (req.body.userId == undefined || typeof req.body.userId !== 'string' || req.body.userId.length === 0) {
+            res.writeHead(400, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'Invalid user ID'))
+            return
+        }
+        let newSettings = {
+            backendPort: Number(req.body.backendPort),
+            frontendPort: Number(req.body.frontendPort),
+            clientId: req.body.clientId,
+            clientSecret: req.body.clientSecret,
+            redirectUri: req.body.redirectUri,
+            authLink: req.body.authLink,
+            token: req.body.token,
+            version: getVar("cfg_version")
+        }
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(sendResponse(true, newSettings))
+        fs.writeFileSync('../config.json', JSON.stringify(newSettings, null, 4), 'utf-8')
+        config = newSettings
+        await asyncDb(db, `CREATE TABLE \`users\` (\`id\` VARCHAR(64) not null, primary key (\`id\`))`)
+        await asyncDb(db, `CREATE TABLE
+            \`modules\` (
+                \`id\` integer not null primary key autoincrement,
+                \`name\` VARCHAR(255) not null,
+                \`description\` varchar(255) not null,
+                \`enabled\` BOOLEAN not null,
+                unique (\`id\`)
+            )`)
+        await asyncDb(db, `CREATE TABLE
+            \`nodes\` (
+                \`dbId\` integer not null primary key autoincrement,
+                \`module\` INT not null,
+                \`id\` INT not null,
+                \`type\` VARCHAR(255) not null,
+                \`x\` INT not null,
+                \`y\` INT not null,
+                \`data\` VARCHAR(255) not null,
+                unique (\`dbId\`)
+            )`)
+        await asyncDb(db, `CREATE TABLE
+            \`edges\` (
+                \`dbId\` integer not null primary key autoincrement,
+                \`module\` INT not null,
+                \`id\` varchar(255) not null,
+                \`from\` int not null,
+                \`to\` int not null,
+                unique (\`dbId\`)
+            )`)
+        await asyncDb(db, `CREATE TABLE
+            \`moduleVariables\` (
+                \`id\` integer not null primary key autoincrement,
+                \`module\` INT not null,
+                \`name\` varchar(255) not null,
+                \`value\` varchar(255) not null,
+                unique (\`id\`)
+            )`)
+        await asyncDb(db, `CREATE TABLE
+            \`interactions\` (
+                \`id\` VARCHAR(64) not null,
+                \`date\` datetime not null default CURRENT_TIMESTAMP,
+                \`success\` BOOLEAN not null,
+                \`error\` VARCHAR(255) null,
+                \`userId\` varchar(64) not null,
+                primary key (\`id\`)
+            )`)
+        await asyncDb(db, `CREATE TABLE
+            \`logs\` (
+                \`id\` integer not null primary key autoincrement,
+                \`date\` DATETIME not null,
+                \`type\` varchar(255) not null,
+                \`message\` varchar(1024) not null,
+                unique (\`id\`)
+            )`)
+        let userExists = await dbSelect(db, 'SELECT * FROM users WHERE id = ?', req.body.userId)
+        if (userExists.length > 0) {
+            res.writeHead(409, { 'content-type': 'application/json' })
+            res.end(sendResponse(false, {}, 'User already exists'))
+            return
+        }
+        await asyncDb(db, 'INSERT INTO users(id) VALUES(?)', req.body.userId)
+        setTimeout(() => {
+            process.exit(69)
+        }, 1000)
     })
 }

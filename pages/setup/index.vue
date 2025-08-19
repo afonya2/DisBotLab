@@ -8,118 +8,50 @@
         title: 'DBL - Settings',
     });
     const toast = useToast()
-    let botinfo: Ref<{ id: string, tag: string, avatar: string }> = ref({ id: '', tag: '', avatar: '' });
     let dblVersion: Ref<string> = ref('Loading...');
     let updateAvailable: Ref<boolean> = ref(false);
-    let settings: Ref<{ clientId: string, clientSecret: string, redirectUri: string, authLink: string, token: string, backendPort: string, frontendPort: string }> = ref({
+    let settings: Ref<{ clientId: string, clientSecret: string, redirectUri: string, authLink: string, token: string, backendPort: string, frontendPort: string, userId: string }> = ref({
         clientId: '',
         clientSecret: '',
         redirectUri: '',
         authLink: '',
         token: '',
-        backendPort: '',
-        frontendPort: ''
+        backendPort: '1025',
+        frontendPort: '3000',
+        userId: ''
     });
 
-    async function getbotinfo() {
-        let req = await utils.apiGet('/api/botinfo');
-        if (req.ok) {
-            botinfo.value = {
-                id: req.body.id,
-                tag: req.body.tag,
-                avatar: req.body.avatar
-            };
-        } else {
-            console.error("Failed to get bot info:", req.error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load bot info, check console for more information.' });
-        }
-    }
     async function getInfo() {
         let req = await utils.apiGet('/api/info');
         if (req.ok) {
             dblVersion.value = req.body.version;
+            if (req.body.setup) {
+                window.location.href = "/";
+            }
         } else {
             console.error("Failed to get info:", req.error);
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load info, check console for more information.' });
         }
     }
-    async function getSettings() {
-        let req = await utils.apiGet('/api/settings');
-        if (req.ok) {
-            settings.value = req.body;
-        } else {
-            console.error("Failed to get settings:", req.error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load settings, check console for more information.' });
-        }
-    }
     async function saveSettings() {
-        let req = await utils.apiPost('/api/settings', JSON.stringify(settings.value));
+        let req = await utils.apiPost('/api/install', JSON.stringify(settings.value));
         if (req.ok) {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully.' });
+            toast.add({ severity: 'success', summary: 'Success', detail: 'Settings saved successfully. Please refresh the page in a few seconds.' });
         } else {
             console.error("Failed to save settings:", req.error);
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save settings: ' + req.error });
         }
     }
-    async function reloadConfig() {
-        let req = await utils.apiPost('/api/reload', JSON.stringify({}));
-        if (req.ok) {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Configuration reloaded successfully.' });
-            getSettings();
-        } else {
-            console.error("Failed to reload config:", req.error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to reload configuration: ' + req.error });
-        }
-    }
-    async function restart() {
-        let req = await utils.apiPost('/api/restart', JSON.stringify({}));
-        if (req.ok) {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Bot restarted successfully.' });
-        } else {
-            console.error("Failed to restart bot:", req.error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to restart bot: ' + req.error });
-        }
-    }
-    async function reloadCommands() {
-        let req = await utils.apiPost('/api/reloadCommands', JSON.stringify({}));
-        if (req.ok) {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Commands reloaded successfully.' });
-        } else {
-            console.error("Failed to reload commands:", req.error);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to reload commands: ' + req.error });
-        }
-    }
     onMounted(async () => {
-        if (!await utils.checkSetup()) {
-            window.location.href = "/setup";
-        }
-        if (!await utils.checkAuth()) {
-            window.location.href = "/login";
-        }
-        getbotinfo()
         getInfo()
-        getSettings()
     })
 </script>
 
 <template>
     <Toast />
-    <Menu />
     <main>
         <div class="flex flex-col gap-4">
-            <h1 class="text-4xl">Settings</h1>
-            <ContentCard class="flex flex-wrap gap-4 items-center">
-                <img :src="botinfo.avatar" :alt="botinfo.tag" style="width: 128px;border-radius: 50%;">
-                <div class="flex flex-col gap-2">
-                    <h2 class="text-2xl">{{ botinfo.tag }}</h2>
-                    <p class="text-gray-500">{{ botinfo.id }}</p>
-                    <div class="flex items-center gap-2 online-online">
-                        <div></div>
-                        <p>Online</p>
-                    </div>
-                </div>
-            </ContentCard>
-
+            <h1 class="text-4xl">Welcome to DisBotLab!</h1>
             <ContentCard class="flex flex-col gap-2" v-if="!updateAvailable">
                 <h2 class="text-2xl">DisBotLab</h2>
                 <div class="flex items-center gap-2 online-online">
@@ -135,15 +67,6 @@
                 </div>
                 <p>Copyright (c) Afonya 2025</p>
                 <Button class="w-fit">Update now!</Button>
-            </ContentCard>
-
-            <ContentCard class="flex flex-col gap-2">
-                <h2 class="text-2xl">System</h2>
-                <div class="flex items-center gap-2">
-                    <Button class="w-fit" severity="danger" @click="restart()"><i class="pi pi-refresh"></i>Restart</Button>
-                    <Button class="w-fit" severity="warn" @click="reloadConfig()"><i class="pi pi-refresh"></i>Reload config</Button>
-                    <Button class="w-fit" severity="warn" @click="reloadCommands()"><i class="pi pi-refresh"></i>Reload commands</Button>
-                </div>
             </ContentCard>
 
             <ContentCard class="flex flex-col gap-2">
@@ -183,9 +106,13 @@
                     <InputText class="ml-auto max-w-full w-96" type="number" placeholder="Frontend port" v-model="settings.frontendPort" />
                 </div>
                 <Divider />
+                <div class="flex flex-wrap items-center">
+                    <p class="text-lg">Owner userID:</p>
+                    <InputText class="ml-auto max-w-full w-96" type="number" placeholder="Owner userID" v-model="settings.userId" />
+                </div>
+                <Divider />
                 <div class="ml-auto w-fit">
-                    <Button severity="warn" @click="getSettings()"><i class="pi pi-undo"></i>Cancel changes</Button>
-                    <Button class="ml-2" @click="saveSettings()"><i class="pi pi-save"></i>Save</Button>
+                    <Button @click="saveSettings()"><i class="pi pi-save"></i>Install</Button>
                 </div>
             </ContentCard>
         </div>
@@ -196,8 +123,8 @@
 main {
     position: absolute;
     top: 0;
-    left: 250px;
-    width: calc(100% - 250px);
+    left: 0;
+    width: 100%;
     height: 100%;
     padding: 20px;
     overflow: auto;

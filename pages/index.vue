@@ -45,6 +45,9 @@
         }
     }
     onMounted(async () => {
+        if (!await utils.checkSetup()) {
+            window.location.href = "/setup";
+        }
         if (!await utils.checkAuth()) {
             window.location.href = "/login";
         }

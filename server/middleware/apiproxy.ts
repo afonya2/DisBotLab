@@ -41,7 +41,15 @@ export default defineEventHandler(async (event) => {
     if (!req.url?.startsWith("/api/")) {
         return
     }
-    const config = JSON.parse(fs.readFileSync("./config.json", "utf-8"))
+    let config: any
+    if (fs.existsSync("./config.json")) {
+        config = JSON.parse(fs.readFileSync("./config.json", "utf-8"))
+    } else {
+        config = {
+            "backendPort": 1025,
+            "frontendPort": 3000
+        }
+    }
     const url = `http://localhost:${config.backendPort}${req.url.replace(/\/api\//, "/")}`
     const body = await new Promise<string>((resolve, reject) => {
         let body = ""

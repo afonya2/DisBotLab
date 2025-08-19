@@ -56,6 +56,20 @@ async function checkAuth(): Promise<boolean> {
     }
 }
 
+async function checkSetup(): Promise<boolean> {
+    let req = await apiGet('/api/info');
+    if (req.ok) {
+        if (req.body.setup) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        console.error("Setup check:", req);
+        return false;
+    }
+}
+
 async function apiGet(url: string, headers = {}): Promise<{ok: boolean, body: any, error?: string}> {
     const token = await getToken();
     headers = {
@@ -118,5 +132,6 @@ export default {
     checkAuth,
     apiGet,
     apiPost,
-    copy
+    copy,
+    checkSetup
 }
