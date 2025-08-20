@@ -8,17 +8,15 @@ A simple, no-code Discord bot creator
 - An SQLite database set up [more info](https://dbl.afonyanet.hu/docs/database)
 
 ## How to set up?
-- Download the repository. (or use `git clone`)
-- open the folder in terminal
-- run `npm install` to install the dependencies
-- run `npm run build`
-- then go to the backend folder
-- run `npm install` there too
-- Create the database in `backend/database.db` [based on this](https://dbl.afonyanet.hu/docs/database)
-- create the config file [more info](https://dbl.afonyanet.hu/docs/config)
-- now go back to the main folder and run `npm run prod`
+- Download the repository and unpack it. (or use `git clone`)
+- Open the folder in terminal
+- Run `npm install` to install the dependencies
+- Run `npm run build`
+- Then go to the folder named backend `cd backend`
+- Run `npm install` there too
+- Now go back to the main folder `cd ..` and run `npm run prod`
 - (Alternatively run `tsx starter.ts`)
-- Access it on: `http://localhost:3000`
+- Do the setup process on: `http://localhost:3000/setup`
 
 ## Found a Bug?
 - Report it by creating an issue.

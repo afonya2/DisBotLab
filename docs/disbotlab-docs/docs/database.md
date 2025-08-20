@@ -5,6 +5,10 @@ description: Database
 
 # Database tables
 
+:::info
+This step is now replaced by our installer!
+:::
+
 ## users
 |Columns|id|
 |---|---|
@@ -34,3 +38,8 @@ description: Database
 |Columns|id|module|name|value|
 |---|---|---|---|---|
 |Type|int (autoincrement)|int|varchar(255)|varchar(255)|
+
+## logs
+|Columns|id|date|type|message|
+|---|---|---|---|---|
+|Type|int (autoincrement)|datetime|varchar(255)|varchar(1024)|

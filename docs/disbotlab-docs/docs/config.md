@@ -5,6 +5,10 @@ description: Configuration
 
 # Configuration
 
+:::info
+This step is now replaced by our installer!
+:::
+
 ## Main config file (`config.json`)
 |key|description|default value|
 |---|---|---|
@@ -15,7 +19,7 @@ description: Configuration
 |`redirectUri`|The redirect URI you use, must redirect to "http(s)://yourdomain:frontendport/login"|`"http://localhost:3000/login"`|
 |`authLink`|Generate an authlink, make sure to give it identify permission||
 |`token`|The token of your Discord bot||
-|`version`|Do not edit; currently there is no use for this, make sure it is in the config.|`"0.2.0"`|
+|`version`|Do not edit; currently there is no use for this, make sure it is in the config.|`"1.0.0"`|
 
 ### Example file:
 ```json title="config.json"
@@ -27,6 +31,6 @@ description: Configuration
     "redirectUri": "http://localhost:3000/login",
     "authLink": "",
     "token": "",
-    "version": "0.2.0"
+    "version": "1.0.0"
 }
 ```
