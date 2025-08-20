@@ -220,7 +220,8 @@ const DBLNodes: { [key: string]: DBLNode } = {
         description: "Creates a new table.",
         category: DBLNodeCategory.Table,
         defaultSave: {
-            variable: ""
+            variable: "",
+            kvmode: false
         },
         variant: "default",
         editor: "table" 

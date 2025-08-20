@@ -437,6 +437,37 @@ class Flow {
                 } else if (globalVariables[node.data.table]) {
                     this.flowVariables[node.data.variable] = globalVariables[node.data.table][completeVariables(node.data.key, this.flowVariables, globalVariables)];
                 }
+            } else if (node.type == "tblSet") {
+                if (this.flowVariables[node.data.table]) {
+                    this.flowVariables[node.data.table][completeVariables(node.data.key, this.flowVariables, globalVariables)] = completeVariables(node.data.value, this.flowVariables, globalVariables);
+                } else if (globalVariables[node.data.table]) {
+                    globalVariables[node.data.table][completeVariables(node.data.key, this.flowVariables, globalVariables)] = completeVariables(node.data.value, this.flowVariables, globalVariables);
+                }
+            } else if (node.type == "tblAppend") {
+                if (this.flowVariables[node.data.table]) {
+                    this.flowVariables[node.data.table].push(completeVariables(node.data.value, this.flowVariables, globalVariables));
+                } else if (globalVariables[node.data.table]) {
+                    globalVariables[node.data.table].push(completeVariables(node.data.value, this.flowVariables, globalVariables));
+                }
+            } else if (node.type == "tblCreate") {
+                if (node.data.kvmode) {
+                    this.flowVariables[node.data.variable] = {};
+                } else {
+                    this.flowVariables[node.data.variable] = [];
+                }
+            } else if (node.type == "jsonStringify") {
+                if (this.flowVariables[node.data.input]) {
+                    this.flowVariables[node.data.variable] = JSON.stringify(this.flowVariables[node.data.input]);
+                } else if (globalVariables[node.data.input]) {
+                    this.flowVariables[node.data.variable] = JSON.stringify(globalVariables[node.data.input]);
+                }
+            }  else if (node.type == "jsonParse") {
+                let data = completeVariables(node.data.input, this.flowVariables, globalVariables);
+                try {
+                    this.flowVariables[node.data.variable] = JSON.parse(data);
+                } catch (e) {
+                    throw new Error("Failed to parse JSON: " + e);
+                }
             }
         }
     }

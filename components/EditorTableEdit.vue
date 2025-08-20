@@ -24,6 +24,10 @@
         <InputText class="w-full" v-model="props.nodeData.save.separator" type="text" />
         <label for="separator">Separator</label>
     </FloatLabel>
+    <div class="flex items-center gap-2" v-if="props.nodeData.save.kvmode !== undefined">
+        <label for="kvmode">Key-Value mode</label>
+        <ToggleSwitch v-model="props.nodeData.save.kvmode" id="kvmode" />
+    </div>
 </template>
 
 <style scoped>

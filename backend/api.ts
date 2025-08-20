@@ -754,7 +754,7 @@ export default function (app: Application, db: Database, config: any, client: Cl
         }))
         res.writeHead(200, { 'content-type': 'application/json' })
         res.end(sendResponse(true, {
-            version: "0.2.0",
+            version: getVar("version"),
             type: "DBL_MODULE",
             name: moduleExists[0].name,
             description: moduleExists[0].description,
